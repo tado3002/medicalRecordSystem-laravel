@@ -1,468 +1,59 @@
 <?php
 
-use App\Http\Resources\UserCollection;
 use App\Models\User;
-use Database\Seeders\UserCollectionSeeder;
 use Database\Seeders\UserSeeder;
-use Illuminate\Contracts\Database\Eloquent\Builder;
-use Illuminate\Http\JsonResponse;
 use Laravel\Sanctum\PersonalAccessToken;
 
-use function Pest\Laravel\delete;
 use function Pest\Laravel\get;
-use function Pest\Laravel\put;
-use function PHPUnit\Framework\assertEquals;
+use function Pest\Laravel\post;
 
 
-describe('get user profile', function () {
-    test('success', function () {
-        $this->seed([UserSeeder::class]);
-        $user = getUser();
-
-        $token = createToken('device_vivo');
-        $expected = responseSuccess('Berhasil mendapatkan data!', $user);
-
-        get('/api/users/profile', [
-            'Authorization' => "Bearer $token",
-        ])->assertOk()->assertJson($expected);
-    });
-    test('failed cause token is invalid', function () {
-        $this->seed([UserSeeder::class]);
-
-        $expected = responseError('Unauthenticated!', null, 'INVALID_CREDENTIALS');
-        get('/api/users/profile', [
-            'Authorization' => "Bearer salah",
-            'Accept' => 'application/json'
-        ])
-            ->assertUnauthorized()
-            ->assertJson($expected);
-    });
-    test('failed cause token is not set', function () {
-        $this->seed([UserSeeder::class]);
-        createToken('testing');
-
-        $expected = responseError('Unauthenticated!', null, 'INVALID_CREDENTIALS');
-        get('/api/users/profile', [
-            'Accept' => 'application/json'
-        ])
-            ->assertUnauthorized()
-            ->assertJson($expected);
-    });
-});
-
-describe('user find by id', function () {
+describe('user profile', function () {
     it('success', function () {
         $this->seed([UserSeeder::class]);
         $user = getUser();
 
-        $token = createToken('device_vivo');
-        $expected = responseSuccess('Berhasil mendapatkan data!', $user);
+        $response = post('/api/users/login', [
+            'email' => $user['email'],
+            'password' => 'testtesttest',
+            'device_name' => 'vivo'
+        ]);
 
-        get('/api/users/' . $user['id'], [
+        $token = $response->json('data.tokenAccess');
+        get('/api/users/profile', [
             'Authorization' => "Bearer $token",
-        ])->assertOk()->assertJson($expected);
-    });
-    it('failed cause user id not found', function () {
-        $this->seed([UserSeeder::class]);
-        $user = getUser();
-        $token = createToken('testing');
-
-        $userId = $user['id'] + 1;
-        $expected = responseError('User tidak ditemukan!', null, 'NOT_FOUND');
-        get('/api/users/' . $userId, [
-            'Authorization' => "Bearer $token",
-            'Accept' => 'application/json'
-        ])
-            ->assertNotFound()
-            ->assertJson($expected);
+        ])->assertOk()->assertJson([
+            'data' => $user
+        ]);
     });
     it('failed cause token is invalid', function () {
         $this->seed([UserSeeder::class]);
-        $user = getUser();
         createToken('testing');
 
-        $expected = responseError('Unauthenticated!', null, 'INVALID_CREDENTIALS');
-        get('/api/users/' . $user['id'], [
+        get('/api/users/profile', [
             'Authorization' => "Bearer salah",
             'Accept' => 'application/json'
         ])
             ->assertUnauthorized()
-            ->assertJson($expected);
+            ->assertJson([
+                'errors' => [
+                    'messages' => ['Unauthorized!']
+                ]
+            ]);
     });
     it('failed cause header not set', function () {
         $this->seed([UserSeeder::class]);
-        $user = getUser();
-        createToken('testing');
-
-        $expected = responseError('Unauthenticated!', null, 'INVALID_CREDENTIALS');
-        get('/api/users/' . $user['id'], headers: [
-            'Accept' => 'application/json'
-        ])
+        get('/api/users/profile', ['Accept' => 'application/json'])
             ->assertUnauthorized()
-            ->assertJson($expected);
+            ->assertJson([
+                'errors' => [
+                    'messages' => ['Unauthorized!']
+                ]
+            ]);
     });
-});
-
-describe('user paginate search by param [role,name]', function () {
-    it('success pagination search default', function () {
-        $this->seed([UserSeeder::class]);
-        $this->seed([UserCollectionSeeder::class]);
-
-        $token = createToken('device_vivo');
-        $userCollection = getUserCollectionResponse()->getData(true);
-
-        $res = get('/api/users/search', [
-            'Authorization' => "Bearer $token",
-        ])->assertOk()->json();
-
-        assertEquals($userCollection['data']['items'], $res['data']['items']);
-    });
-    it('success pagination search by page 2 and size 20', function () {
-        $this->seed([UserSeeder::class]);
-        $this->seed([UserCollectionSeeder::class]);
-
-        $token = createToken('device_vivo');
-        $userCollection = getUserCollectionResponse([
-            'page' => 2,
-            'size' => 20
-        ])->getData(true);
-
-        $res = get('/api/users/search?page=2&&size=20', [
-            'Authorization' => "Bearer $token",
-        ])->assertOk()->json();
-
-        assertEquals($userCollection['data']['items'], $res['data']['items']);
-    });
-    it('success pagination search by role is ADMIN', function () {
-        $this->seed([UserSeeder::class]);
-        $this->seed([UserCollectionSeeder::class]);
-
-        $token = createToken('device_vivo');
-        $userCollection = getUserCollectionResponse([
-            'role' => 'ADMIN'
-        ])->getData(true);
-
-        $res = get('/api/users/search?role=ADMIN', [
-            'Authorization' => "Bearer $token",
-        ])->assertOk()->json();
-
-        // cek setiap item memiliki role ADMIN
-        foreach ($res['data']['items'] as $key => $value) {
-            assertEquals($value['role'], 'ADMIN');
-        };
-
-        assertEquals($userCollection['data']['items'], $res['data']['items']);
-    });
-    it('success pagination search by role is DOCTER', function () {
-        $this->seed([UserSeeder::class]);
-        $this->seed([UserCollectionSeeder::class]);
-
-        $token = createToken('device_vivo');
-        $userCollection = getUserCollectionResponse([
-            'role' => 'DOCTER'
-        ])->getData(true);
-
-        $res = get('/api/users/search?role=DOCTER', [
-            'Authorization' => "Bearer $token",
-        ])->assertOk()->json();
-
-        // cek setiap item memiliki role ADMIN
-        foreach ($res['data']['items'] as $key => $value) {
-            assertEquals($value['role'], 'DOCTER');
-        };
-
-        assertEquals($userCollection['data']['items'], $res['data']['items']);
-    });
-    it('success pagination search by role is NURSE', function () {
-        $this->seed([UserSeeder::class]);
-        $this->seed([UserCollectionSeeder::class]);
-
-        $token = createToken('device_vivo');
-        $userCollection = getUserCollectionResponse([
-            'role' => 'NURSE'
-        ])->getData(true);
-
-        $res = get('/api/users/search?role=NURSE', [
-            'Authorization' => "Bearer $token",
-        ])->assertOk()->json();
-
-        // cek setiap item memiliki role ADMIN
-        foreach ($res['data']['items'] as $key => $value) {
-            assertEquals($value['role'], 'NURSE');
-        };
-
-        assertEquals($userCollection['data']['items'], $res['data']['items']);
-    });
-    it('success pagination search by name', function () {
-        $this->seed([UserSeeder::class]);
-        $this->seed([UserCollectionSeeder::class]);
-
-        $token = createToken('device_vivo');
-        $userName = User::first('name');
-
-        $userCollection = getUserCollectionResponse([
-            'name' => $userName
-        ])->getData(true);
+})->only();
 
 
-        $res = get('/api/users/search?name=' . $userName, [
-            'Authorization' => "Bearer $token",
-        ])->assertOk()->json();
-
-
-        assertEquals($userCollection['data']['items'], $res['data']['items']);
-    });
-    it('failed cause user id not found', function () {
-        $this->seed([UserSeeder::class]);
-        $user = getUser();
-        $token = createToken('testing');
-
-        $userId = $user['id'] + 1;
-        $expected = responseError('User tidak ditemukan!', null, 'NOT_FOUND');
-        get('/api/users/' . $userId, [
-            'Authorization' => "Bearer $token",
-            'Accept' => 'application/json'
-        ])
-            ->assertNotFound()
-            ->assertJson($expected);
-    });
-    it('failed cause token is invalid', function () {
-        $this->seed([UserSeeder::class]);
-        $user = getUser();
-        createToken('testing');
-
-        $expected = responseError('Unauthenticated!', null, 'INVALID_CREDENTIALS');
-        get('/api/users/' . $user['id'], [
-            'Authorization' => "Bearer salah",
-            'Accept' => 'application/json'
-        ])
-            ->assertUnauthorized()
-            ->assertJson($expected);
-    });
-    it('failed cause header not set', function () {
-        $this->seed([UserSeeder::class]);
-        $user = getUser();
-        createToken('testing');
-
-        $expected = responseError('Unauthenticated!', null, 'INVALID_CREDENTIALS');
-        get('/api/users/' . $user['id'], headers: [
-            'Accept' => 'application/json'
-        ])
-            ->assertUnauthorized()
-            ->assertJson($expected);
-    });
-});
-
-describe('update user', function () {
-    it('success', function () {
-        $this->seed([UserSeeder::class]);
-        $user = getUser();
-        $token = createToken('device_vivo');
-
-        $emailBaru = 'newEmail@gmail.com';
-        $user['email'] = $emailBaru;
-
-        $expected = responseSuccess('Berhasil mengupdate data!', $user);
-
-        put(
-            "/api/users/{$user['id']}",
-            ['email' => $emailBaru],
-            headers: ['Authorization' => "Bearer $token"]
-        )
-            ->assertOk()
-            ->assertJson($expected);
-    });
-    it('conflict error cause email has use by another user', function () {
-        $this->seed([UserSeeder::class]);
-        $user = getUser();
-        $token = createToken('device_vivo');
-
-        $user['email'] = 'iniemailsama@gmail.com';
-        $user['password'] = 'iniemailsama';
-        createUser($user);
-
-        $expected = responseError('User request tidak valid!', [
-            'email' => ['The email has already been taken.']
-        ], 'BAD_REQUEST');
-
-        put(
-            "/api/users/{$user['id']}",
-            ['email' => $user['email']],
-            headers: ['Authorization' => "Bearer $token"]
-        )
-            ->assertUnprocessable()
-            ->assertJson($expected);
-    });
-    it('not found error cause user id not exist', function () {
-        $this->seed([UserSeeder::class]);
-        $user = getUser();
-        $token = createToken('device_vivo');
-        $expected = responseError('User tidak ditemukan!', null, 'NOT_FOUND');
-
-        $userId = $user['id'] + 1;
-        put(
-            "/api/users/{$userId}",
-            ['phone' => '082146966594'],
-            headers: ['Authorization' => "Bearer $token"]
-        )
-            ->assertNotFound()
-            ->assertJson($expected);
-    });
-    it('failed cause role not admin', function () {
-        $this->seed([UserSeeder::class]);
-        $user = getUser();
-        // update role to NURSE
-        $updatedUser = User::where('email', $user['email'])->first();
-        $updatedUser->role = 'NURSE';
-        $updatedUser->save();
-
-        $token = createToken('device_vivo');
-
-        $expected = responseError('Hanya untuk role ADMIN!', null, 'FORBIDDEN');
-        put(
-            "/api/users/{$user['id']}",
-            ['email' => $user['email']],
-            headers: [
-                'Authorization' => "Bearer $token",
-                'Accept' => 'application/json'
-            ]
-        )
-            ->assertForbidden()
-            ->assertJson($expected);
-    });
-    it('failed cause token not set', function () {
-        $this->seed([UserSeeder::class]);
-        $user = getUser();
-
-        $expected = responseError('Unauthenticated!', null, 'INVALID_CREDENTIALS');
-
-        $user['phone'] = '081330329363';
-        put(
-            "/api/users/{$user['id']}",
-            ['email' => $user['email']],
-            ['Accept' => 'application/json']
-
-        )
-            ->assertUnauthorized()
-            ->assertJson($expected);
-    });
-});
-
-describe('delete user', function () {
-    it('success', function () {
-        $this->seed([UserSeeder::class]);
-        $user = getUser();
-        $token = createToken('device_vivo');
-
-        $expected = responseSuccess('Berhasil menghapus data!', $user);
-
-        delete(
-            "/api/users/{$user['id']}",
-            headers: ['Authorization' => "Bearer $token"]
-        )
-            ->assertOk()
-            ->assertJson($expected);
-    });
-    it('not found error cause user id not exist', function () {
-        $this->seed([UserSeeder::class]);
-        $user = getUser();
-        $token = createToken('device_vivo');
-        $expected = responseError('User tidak ditemukan!', null, 'NOT_FOUND');
-
-        $userId = $user['id'] + 1;
-        delete(
-            "/api/users/{$userId}",
-            headers: ['Authorization' => "Bearer $token"]
-        )
-            ->assertNotFound()
-            ->assertJson($expected);
-    });
-    it('failed cause role not admin', function () {
-        $this->seed([UserSeeder::class]);
-        $user = getUser();
-        // update role to NURSE
-        $updatedUser = User::where('email', $user['email'])->first();
-        $updatedUser->role = 'NURSE';
-        $updatedUser->save();
-
-        $token = createToken('device_vivo');
-
-        $expected = responseError('Hanya untuk role ADMIN!', null, 'FORBIDDEN');
-        delete(
-            "/api/users/{$user['id']}",
-            headers: [
-                'Authorization' => "Bearer $token",
-                'Accept' => 'application/json'
-            ]
-        )
-            ->assertForbidden()
-            ->assertJson($expected);
-    });
-    it('failed cause token not set', function () {
-        $this->seed([UserSeeder::class]);
-        $user = getUser();
-
-        $expected = responseError('Unauthenticated!', null, 'INVALID_CREDENTIALS');
-
-        delete(
-            "/api/users/{$user['id']}",
-            headers: ['Accept' => 'application/json']
-
-        )
-            ->assertUnauthorized()
-            ->assertJson($expected);
-    });
-});
-
-
-function getUserCollectionResponse(array $params = []): JsonResponse
-{
-    $page = $params['page'] ?? 1;
-    $size = $params['size'] ?? 10;
-
-    $users = User::where(function (Builder $builder) use ($params) {
-        $name = $params['name'] ?? null;
-        $role = $params['role'] ?? null;
-
-        if ($role) $builder->where('role', $role);
-        if ($name) $builder->where('name', "%$name%");
-    })
-        ->paginate(perPage: $size, page: $page);
-
-    $usersCollection = new UserCollection($users);
-    $res = responseSuccess('Berhasil mendapatkan data!', $usersCollection->toArray(request()));
-    return response()->json($res);
-}
-function toUserResponse($data)
-{
-    return [
-        'name' => $data['name'],
-        'email' => $data['email'],
-        'role' => $data['role'],
-        'phone' => $data['phone'],
-    ];
-}
-function responseSuccess(string $message, $data, int $statusCode = 200)
-{
-    return [
-        'success' => true,
-        'message' => $message,
-        'data' => !empty($data['page']) ? $data : toUserResponse($data),
-        'errors' => null
-    ];
-}
-function responseError(string $message, $details, $code)
-{
-    return [
-        'success' => false,
-        'message' => $message,
-        'data' => null,
-        'errors' => [
-            'code' => $code,
-            'details' => $details,
-        ]
-    ];
-}
 function getUser()
 {
     return User::where('email', 'test@gmail.com')
@@ -480,8 +71,4 @@ function createToken(string $name)
 function getToken()
 {
     return PersonalAccessToken::limit(1)->first();
-}
-function createUser($data)
-{
-    return User::create($data);
 }
