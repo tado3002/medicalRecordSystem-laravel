@@ -19,6 +19,7 @@ return new class extends Migration
                 ->default('NURSE')->nullable(false);
             $table->string('password');
             $table->string('phone');
+            $table->rememberToken();
             $table->timestamps();
         });
     }
