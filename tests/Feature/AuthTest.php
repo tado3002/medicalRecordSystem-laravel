@@ -6,6 +6,7 @@ use Laravel\Sanctum\PersonalAccessToken;
 
 use function Pest\Laravel\post;
 use function PHPUnit\Framework\assertEquals;
+use function PHPUnit\Framework\assertNull;
 
 describe('register user', function () {
     test('success', function () {
@@ -16,15 +17,10 @@ describe('register user', function () {
             'role' => 'NURSE',
             'phone' => '08214780323'
         ];
+        $expected = responseSuccess('Registrasi user berhasil!', toUserResponse($data));
         post('/api/auth/register', $data)
-            ->assertCreated()->assertJson([
-                'data' => [
-                    'name' => 'Muhammad Murtadlo',
-                    'email' => 'muh.murtadlo23@gmail.com',
-                    'role' => 'NURSE',
-                    'phone' => '08214780323'
-                ]
-            ]);
+            ->assertCreated()
+            ->assertJson($expected);
     });
 
     test('failed cause invalid data request', function () {
@@ -38,15 +34,13 @@ describe('register user', function () {
         ];
         post('/api/auth/register', $data)
             ->assertBadRequest()
-            ->assertJson([
-                'errors' => [
-                    'name' => ["The name field is required."],
-                    'email' => ["The email field must be a valid email address."],
-                    'password' => ["The password field must be at least 8 characters."],
-                    'role' => ["The selected role is invalid."],
-                    'phone' => ["The phone field must be at least 10 characters."]
-                ]
-            ]);
+            ->assertJson(responseError('User request tidak valid!', [
+                'name' => ["The name field is required."],
+                'email' => ["The email field must be a valid email address."],
+                'password' => ["The password field must be at least 8 characters."],
+                'role' => ["The selected role is invalid."],
+                'phone' => ["The phone field must be at least 10 characters."]
+            ], 'BAD_REQUEST'));
     });
 
     test('failed cause email is exist', function () {
@@ -60,9 +54,9 @@ describe('register user', function () {
         ];
         post('/api/auth/register', $data)
             ->assertConflict()
-            ->assertJson([
-                'errors' => ['messages ' => ['email sudah digunakan!']]
-            ]);
+            ->assertJson(
+                responseError('Email sudah digunakan!', null, 'CONFLICT_ERROR')
+            );
     });
 });
 
@@ -76,10 +70,9 @@ describe('user login', function () {
             'device_name' => 'vivo'
         ])
             ->assertOk()
-            ->assertSee('tokenAccess');
+            ->assertSee('accessToken');
         $token = getToken();
         assertEquals($user['id'], $token->tokenable_id);
-        assertEquals('vivo', $token->name);
     });
     test('failed cause email is wrong', function () {
         $this->seed([UserSeeder::class]);
@@ -87,9 +80,11 @@ describe('user login', function () {
         post('/api/auth/login', [
             'email' => 'test1@gmail.com',
             'password' => 'testtesttest'
-        ])->assertUnauthorized()->assertJson([
-            'errors' => ['messages ' => ['email atau password salah!']]
-        ]);
+        ])->assertUnauthorized()->assertJson(
+            responseError('Email atau password salah!', null, 'WRONG_CREDENTIALS')
+        );
+        $token = getToken();
+        assertNull($token);
     });
     test('failed cause password is wrong', function () {
         $this->seed([UserSeeder::class]);
@@ -97,9 +92,11 @@ describe('user login', function () {
         post('/api/auth/login', [
             'email' => 'test@gmail.com',
             'password' => 'salahslaah'
-        ])->assertUnauthorized()->assertJson([
-            'errors' => ['messages ' => ['email atau password salah!']]
-        ]);
+        ])->assertUnauthorized()->assertJson(
+            responseError('Email atau password salah!', null, 'WRONG_CREDENTIALS')
+        );
+        $token = getToken();
+        assertNull($token);
     });
     test('failed cause password request is empty', function () {
         $this->seed([UserSeeder::class]);
@@ -107,9 +104,15 @@ describe('user login', function () {
         post('/api/auth/login', [
             'email' => 'test@gmail.com',
             'password' =>  ''
-        ])->assertBadRequest()->assertJson([
-            'errors' => ['password' => ["The password field is required."]]
-        ]);
+        ])
+            ->assertBadRequest()
+            ->assertJson(
+                responseError('User request tidak valid!', [
+                    'password' => ["The password field is required."]
+                ], 'BAD_REQUEST')
+            );
+        $token = getToken();
+        assertNull($token);
     });
     test('failed cause email request is invalid', function () {
         $this->seed([UserSeeder::class]);
@@ -117,17 +120,66 @@ describe('user login', function () {
         post('/api/auth/login', [
             'email' => 'test',
             'password' =>  'testtesttest'
-        ])->assertBadRequest()->assertJson([
-            'errors' => ['email' => ['The email field must be a valid email address.']]
-        ]);
+        ])
+            ->assertBadRequest()
+            ->assertJson(
+                responseError('User request tidak valid!', [
+                    'email' => ["The email field must be a valid email address."]
+                ], 'BAD_REQUEST')
+            );
+
+        $token = getToken();
+        assertNull($token);
     });
 });
 
 
 
+function toRegisterResponse($data)
+{
+    return [
+        'user' => toUserResponse($data),
+    ];
+}
 
 
+function toUserResponse($data)
+{
+    return [
+        'name' => $data['name'],
+        'email' => $data['email'],
+        'role' => $data['role'],
+        'phone' => $data['phone'],
+    ];
+}
 
+function toTokenResponse($data)
+{
+    return [
+        'accessToken' => $data['accessToken']
+    ];
+}
+function responseSuccess(string $message, $data, int $statusCode = 200)
+{
+    return [
+        'success' => true,
+        'message' => $message,
+        'data' => $data,
+        'errors' => null
+    ];
+}
+function responseError(string $message, $details, $code)
+{
+    return [
+        'success' => false,
+        'message' => $message,
+        'data' => null,
+        'errors' => [
+            'code' => $code,
+            'details' => $details,
+        ]
+    ];
+}
 function getUser()
 {
     return User::where('email', 'test@gmail.com')

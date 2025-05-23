@@ -2,21 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Http\Requests\UserLoginRequest;
 use App\Http\Requests\UserRegisterRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
-use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 
 
 class AuthController extends Controller
 {
-    public function register(UserRegisterRequest $userRegisterRequest): JsonResponse
+    public function register(UserRegisterRequest $userRegisterRequest)
     {
         $data = $userRegisterRequest->validated();
         // throw conflict error if email exist
@@ -24,33 +20,40 @@ class AuthController extends Controller
         $data['password'] = Hash::make($data['password']);
         $user = User::create($data);
 
-        return (new UserResource($user))->response()->setStatusCode(201);
+
+        return $this->responseSuccess(
+            'Registrasi user berhasil!',
+            new UserResource($user),
+            201
+        );
     }
 
-    public function login(Request $request, UserLoginRequest $userLoginRequest): JsonResponse
+    public function login(UserLoginRequest $userLoginRequest)
     {
         $data = $userLoginRequest->validated();
-        if (!Auth::attempt($data)) {
-            throw new HttpResponseException(response([
-                'errors' => ['messages ' => ['email atau password salah!']]
-            ], 401));
+
+        if (!auth()->attempt($data)) {
+            $this->responseError('Email atau password salah!', 'WRONG_CREDENTIALS', 401);
         }
-        $user = User::where('email', $data['email'])->first();
-        $token = $user->createToken($request->device_name)->plainTextToken;
-        return new JsonResponse([
-            'data' => ['tokenAccess' => $token]
+        $user = auth()->user();
+        $ability = $user->role == 'ADMIN' ? ['user-resource'] : [];
+        $token = $user->createToken('auth_token', $ability)->plainTextToken;
+
+        return $this->responseSuccess('User berhasil login!', [
+            'user' => new UserResource($user),
+            'token' => ['accessToken' => $token]
         ]);
     }
 
+    public function unauthenticated()
+    {
+        $this->responseError('Unauthenticated!', 'INVALID_CREDENTIAL', 401);
+    }
 
 
     private function throwConflictIfEmailFound(string $email)
     {
         $user = User::where('email', $email)->first();
-        if ($user) {
-            throw new HttpResponseException(response([
-                'errors' => ['messages ' => ['email sudah digunakan!']]
-            ], 409));
-        }
+        if ($user) $this->responseError('Email sudah digunakan!', 'CONFLICT_ERROR', 409);
     }
 }

@@ -35,7 +35,13 @@ class UserRegisterRequest extends FormRequest
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response([
-            'errors' => $validator->getMessageBag()
+            'success' => false,
+            'message' => 'User request tidak valid!',
+            'errors' => [
+                'code' => 'BAD_REQUEST',
+                'details' => $validator->getMessageBag(),
+            ],
+            'data' => null
         ], 400));
     }
 }
