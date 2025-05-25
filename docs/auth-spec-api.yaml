@@ -1,0 +1,242 @@
+openapi: "3.0.0"
+servers:
+  - url: localhost:8000/api/auth
+info:
+  contact:
+    name: Muhammad Murtadlo
+  version: "1.0.0"
+  title: "Medical Record System API"
+  description: Api untuk memanajemen medical record
+
+paths:
+  /register:
+    post:
+      summary: Registrasi User
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRequest"
+            example:
+              name: "Muhammad Murtadlo"
+              email: "ikiemail@gmail.com"
+              password: "ikipassword123"
+              phone: "0821468948324"
+              role: "ADMIN"
+      responses:
+        "201":
+          description: Registrasi User berhasil
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegisterSuccessResponse"
+              example:
+                success: true
+                message: "Registrasi user berhasil"
+                data:
+                  id: 1
+                  name: "Muhammad Murtadlo"
+                  email: "ikiemail@gmail.com"
+                  phone: "0821468948324"
+                  role: "ADMIN"
+                errors: null
+        "422":
+          description: "Gagal dikarenakan user request tidak valid"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: true
+                message: "Request user tidak valid!"
+                data: null
+                error:
+                  code: "REQUEST_INVALID"
+                  details:
+                    email: ["The email must be not empty."]
+  /login:
+    post:
+      summary: Login User
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+            example:
+              email: "ikiemail@gmail.com"
+              password: "ikipassword123"
+
+      responses:
+        "200":
+          description: Registrasi User berhasil
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginSuccessResponse"
+              example:
+                success: true
+                message: "Registrasi user berhasil"
+                data:
+                  user:
+                    id: 1
+                    name: "Muhammad Murtadlo"
+                    email: "ikiemail@gmail.com"
+                    phone: "0821468948324"
+                    role: "ADMIN"
+                  token:
+                    accessToken: "iniaksestoken"
+                errors: null
+        "422":
+          description: "Gagal dikarenakan user request tidak valid"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: true
+                message: "Request user tidak valid!"
+                data: null
+                error:
+                  code: "REQUEST_INVALID"
+                  details:
+                    email: ["The email must be not empty."]
+        "403":
+          description: "Gagal dikarenakan email atau password salah"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: true
+                message: "Email atau passsword salah!"
+                data: null
+                error:
+                  code: "UNAUTHORIZED"
+                  details: null
+components:
+  schemas:
+    UserRequest:
+      type: object
+      required:
+        - "name"
+        - "email"
+        - "password"
+        - "phone"
+        - "role"
+      properties:
+        name:
+          type: string
+          minLength: 4
+          maxLength: 100
+        email:
+          type: string
+          uniqueItems: true
+          format: email
+        password:
+          type: string
+          minLength: 8
+          maxLength: 100
+        phone:
+          type: string
+          minLength: 10
+          maxLength: 15
+        role:
+          type: string
+          enum:
+            - ADMIN
+            - NURSE
+            - DOCTER
+    UserResponse:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 4
+          maxLength: 100
+        email:
+          type: string
+          uniqueItems: true
+          format: email
+        password:
+          type: string
+          minLength: 8
+          maxLength: 100
+        phone:
+          type: string
+          minLength: 10
+          maxLength: 15
+        role:
+          type: string
+          enum:
+            - ADMIN
+            - NURSE
+            - DOCTER
+
+    RegisterSuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          default: true
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/UserResponse"
+        errors:
+          type: object
+          nullable: true
+          default: null
+    LoginSuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          default: true
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            user:
+              $ref: "#/components/schemas/UserResponse"
+            token:
+              type: object
+              properties:
+                accessToken:
+                  type: string
+        errors:
+          type: object
+          nullable: true
+          default: null
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          default: false
+        message:
+          type: string
+        data:
+          type: object
+          nullable: true
+          default: null
+        errors:
+          type: object
+          properties:
+            code:
+              type: string
+            details:
+              type: object
+              nullable: true
+              default: null
+              properties:
+                fields:
+                  type: array
+                  items:
+                    type: string

@@ -1,0 +1,298 @@
+openapi: "3.0.3"
+info:
+  title: User API Medical Record System
+  description: API untuk memanajemen data user
+  version: "1.0"
+
+servers:
+  - url: http://localhost:8000/api/users
+
+paths:
+  /{userId}:
+    put:
+      security:
+        - Bearer: []
+
+      parameters:
+        - Authorization:
+          example: Bearer accessToken
+          $ref: "#/components/securitySchemes/Bearer"
+
+        - in: path
+          required: true
+          name: userId
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+
+      description: mengupdate data user berdasarkan id
+
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRequest"
+            example:
+              email: newEmail@gmail.com
+              phone: "081330329363"
+      responses:
+        "200":
+          description: Berhasil memperbarui data user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+              example:
+                success: true
+                message: "Update user berhasil!"
+                data:
+                  id: 1
+                  name: "Muhammad Murtadlo"
+                  email: "newEmail@gmail.com"
+                  phone: "081330329363"
+                  role: "ADMIN"
+                errors: null
+        "422":
+          description: Gagal memperbarui karena validasi error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+              example:
+                success: false
+                message: "User request tidak valid!"
+                data: null
+                errors:
+                  code: "REQUEST_INVALID"
+                  details: ["The email has already been taken."]
+        "401":
+          description: Gagal memperbarui karena token invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+              example:
+                success: false
+                message: "Unauthenticated!"
+                data: null
+                errors:
+                  code: "INVALID_CREDENTIALS"
+                  details: null
+        "403":
+          description: Gagal memperbarui karena role bukan ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+              example:
+                success: false
+                message: "Hanya untuk role ADMIN!"
+                data: null
+                errors:
+                  code: "FORBIDDEN"
+                  details: null
+    delete:
+      security:
+        - Bearer: []
+
+      parameters:
+        - Authorization:
+          example: Bearer accessToken
+          $ref: "#/components/securitySchemes/Bearer"
+
+        - in: path
+          required: true
+          name: userId
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+
+      description: menghapus data user
+
+      responses:
+        "200":
+          description: Berhasil menghapus data user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+              example:
+                success: true
+                message: "Berhasil menghapus data!"
+                data:
+                  id: 1
+                  name: "Muhammad Murtadlo"
+                  email: "newEmail@gmail.com"
+                  phone: "081330329363"
+                  role: "ADMIN"
+                errors: null
+        "401":
+          description: Gagal memperbarui karena token invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+              example:
+                success: false
+                message: "Unauthenticated!"
+                data: null
+                errors:
+                  code: "INVALID_CREDENTIALS"
+                  details: null
+        "403":
+          description: Gagal memperbarui karena role bukan ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+              example:
+                success: false
+                message: "Hanya untuk role ADMIN!"
+                data: null
+                errors:
+                  code: "FORBIDDEN"
+                  details: null
+  /profile:
+    get:
+      description: Route untuk mendapatkan data masing-masing user
+      security:
+        - Bearer: []
+      responses:
+        "200":
+          description: Berhasil mendapatkan profile user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+              example:
+                success: true
+                message: "Berhasil mendapatkan data!"
+                data:
+                  id: 1
+                  name: "Muhammad Murtadlo"
+                  email: "newEmail@gmail.com"
+                  phone: "081330329363"
+                  role: "ADMIN"
+                errors: null
+        "401":
+          description: Gagal mendapatkan data karena token invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+              example:
+                success: false
+                message: "Unauthenticated!"
+                data: null
+                errors:
+                  code: "INVALID_CREDENTIALS"
+                  details: null
+
+components:
+  schemas:
+    UserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 4
+          maxLength: 100
+        email:
+          type: string
+          uniqueItems: true
+          format: email
+        password:
+          type: string
+          minLength: 8
+          maxLength: 100
+        phone:
+          type: string
+          minLength: 10
+          maxLength: 15
+        role:
+          enum:
+            - ADMIN
+            - NURSE
+            - DOCTER
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          default: true
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            user:
+              $ref: "#/components/schemas/UserResponse"
+            token:
+              type: object
+              properties:
+                accessToken:
+                  type: string
+        errors:
+          type: object
+          nullable: true
+          default: null
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          default: false
+        message:
+          type: string
+        data:
+          default: null
+        errors:
+          type: object
+          properties:
+            code:
+              type: string
+            details:
+              type: object
+              nullable: true
+              properties:
+                fields:
+                  type: array
+                  items:
+                    type: string
+
+          default: null
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          minLength: 4
+          maxLength: 100
+        email:
+          type: string
+          uniqueItems: true
+          format: email
+        password:
+          type: string
+          minLength: 8
+          maxLength: 100
+        phone:
+          type: string
+          minLength: 10
+          maxLength: 15
+        role:
+          type: string
+          enum:
+            - ADMIN
+            - NURSE
+            - DOCTER
+  securitySchemes:
+    Bearer:
+      type: apiKey
+      name: Authorization
+      in: header
+      description: tambahkan spasi setelah kata Bearer lalu diikuti token, exp "Bearer tokenmu"
