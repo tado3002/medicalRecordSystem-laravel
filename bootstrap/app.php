@@ -22,7 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (AuthenticationException $e, $request) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthenticated',
+                'message' => 'Unauthenticated!',
                 'data' => null,
                 'errors' => [
                     'code' => 'INVALID_CREDENTIALS',
