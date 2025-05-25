@@ -6,7 +6,7 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class UserRegisterRequest extends FormRequest
+class PatientUpdateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,11 +24,13 @@ class UserRegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|min:4|max:100',
-            'email' => 'required|email|unique:users|max:100',
-            'password' => 'required|min:8|max:100',
-            'role' => ['required', 'in:NURSE,ADMIN,DOCTER'],
-            'phone' => 'required|min:10|max:15'
+            'name' => 'sometimes|string|min:6|max:100',
+            'nik' => 'sometimes|string',
+            'gender' => 'sometimes|in:male,female',
+            'birthday' => 'sometimes|date',
+            'address' => 'sometimes|min:6|max:100',
+            'phone' => 'sometimes|min:6|max:15',
+            'emergency_phone' => 'sometimes|min:6|max:15',
         ];
     }
 
@@ -38,10 +40,10 @@ class UserRegisterRequest extends FormRequest
             'success' => false,
             'message' => 'User request tidak valid!',
             'errors' => [
-                'code' => 'VALIDATION_ERROR',
-                'details' => $validator->getMessageBag(),
+                'code' => 'BAD_REQUEST',
+                'details' => $validator->getMessageBag()
             ],
             'data' => null
-        ], 422));
+        ], 400));
     }
 }

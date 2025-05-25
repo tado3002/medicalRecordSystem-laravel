@@ -6,14 +6,14 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class UserRegisterRequest extends FormRequest
+class DocterUpdateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user() != null;
     }
 
     /**
@@ -24,24 +24,20 @@ class UserRegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|min:4|max:100',
-            'email' => 'required|email|unique:users|max:100',
-            'password' => 'required|min:8|max:100',
-            'role' => ['required', 'in:NURSE,ADMIN,DOCTER'],
-            'phone' => 'required|min:10|max:15'
+            'specialization' => 'required|string|min:6'
         ];
     }
-
     protected function failedValidation(Validator $validator)
     {
-        throw new HttpResponseException(response([
+        throw new HttpResponseException(response()->json([
             'success' => false,
+            'data' => null,
             'message' => 'User request tidak valid!',
             'errors' => [
-                'code' => 'VALIDATION_ERROR',
-                'details' => $validator->getMessageBag(),
-            ],
-            'data' => null
+                'code' => 'INVALID_REQUEST',
+                'details' => $validator->getMessageBag()
+            ]
+
         ], 422));
     }
 }

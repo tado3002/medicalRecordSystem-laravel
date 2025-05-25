@@ -6,7 +6,7 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class UserRegisterRequest extends FormRequest
+class MedicalRecordUpdateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,24 +24,24 @@ class UserRegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|min:4|max:100',
-            'email' => 'required|email|unique:users|max:100',
-            'password' => 'required|min:8|max:100',
-            'role' => ['required', 'in:NURSE,ADMIN,DOCTER'],
-            'phone' => 'required|min:10|max:15'
+            'docter_id' => 'sometimes|required|integer|min:1',
+            'patient_id' => 'sometimes|required|integer|min:1',
+            'diagnosis' => 'sometimes|required|string',
+            'date' => 'sometimes|required|date',
+            'treatment' => 'sometimes|required|string',
         ];
     }
 
     protected function failedValidation(Validator $validator)
     {
-        throw new HttpResponseException(response([
+        throw new HttpResponseException(response()->json([
             'success' => false,
             'message' => 'User request tidak valid!',
+            'data' => null,
             'errors' => [
-                'code' => 'VALIDATION_ERROR',
-                'details' => $validator->getMessageBag(),
+                'code' => 'INVALID_REQUEST',
+                'details' => $validator->getMessageBag()
             ],
-            'data' => null
         ], 422));
     }
 }

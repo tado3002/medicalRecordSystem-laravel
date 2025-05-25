@@ -16,7 +16,6 @@ class AuthController extends Controller
     {
         $data = $userRegisterRequest->validated();
         // throw conflict error if email exist
-        $this->throwConflictIfEmailFound($data['email']);
         $data['password'] = Hash::make($data['password']);
         $user = User::create($data);
 
@@ -48,12 +47,5 @@ class AuthController extends Controller
     public function unauthenticated()
     {
         $this->responseError('Unauthenticated!', 'INVALID_CREDENTIAL', 401);
-    }
-
-
-    private function throwConflictIfEmailFound(string $email)
-    {
-        $user = User::where('email', $email)->first();
-        if ($user) $this->responseError('Email sudah digunakan!', 'CONFLICT_ERROR', 409);
     }
 }
