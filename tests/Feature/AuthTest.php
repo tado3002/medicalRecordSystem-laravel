@@ -33,14 +33,14 @@ describe('register user', function () {
 
         ];
         post('/api/auth/register', $data)
-            ->assertBadRequest()
+            ->assertUnprocessable()
             ->assertJson(responseError('User request tidak valid!', [
                 'name' => ["The name field is required."],
                 'email' => ["The email field must be a valid email address."],
                 'password' => ["The password field must be at least 8 characters."],
                 'role' => ["The selected role is invalid."],
                 'phone' => ["The phone field must be at least 10 characters."]
-            ], 'BAD_REQUEST'));
+            ], 'VALIDATION_ERROR'));
     });
 
     test('failed cause email is exist', function () {
@@ -53,10 +53,10 @@ describe('register user', function () {
             'phone' => '08214780323'
         ];
         post('/api/auth/register', $data)
-            ->assertConflict()
-            ->assertJson(
-                responseError('Email sudah digunakan!', null, 'CONFLICT_ERROR')
-            );
+            ->assertUnprocessable()
+            ->assertJson(responseError('User request tidak valid!', [
+                'email' => ["The email has already been taken."],
+            ], 'VALIDATION_ERROR'));
     });
 });
 
