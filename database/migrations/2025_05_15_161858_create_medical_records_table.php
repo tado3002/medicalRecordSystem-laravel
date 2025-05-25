@@ -20,8 +20,8 @@ return new class extends Migration
 
             $table->unsignedBigInteger('patient_id')->nullable(false);
             $table->unsignedBigInteger('docter_id')->nullable(false);
-            $table->foreign('patient_id')->on('patients')->references('id');
-            $table->foreign('docter_id')->on('docters')->references('id');
+            $table->foreign('patient_id')->on('patients')->references('id')->onDelete('cascade');
+            $table->foreign('docter_id')->on('docters')->references('id')->onDelete('cascade');
         });
     }
 

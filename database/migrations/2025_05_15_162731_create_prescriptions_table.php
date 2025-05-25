@@ -20,7 +20,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unsignedBigInteger('medical_record_id')->nullable(false);
-            $table->foreign('medical_record_id')->on('medical_records')->references('id');
+            $table->foreign('medical_record_id')->on('medical_records')->references('id')->onDelete('cascade');
         });
     }
 
