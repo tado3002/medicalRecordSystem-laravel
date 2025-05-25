@@ -19,7 +19,7 @@ class EnsureTokenIsValid
         if (!$request->bearerToken()) {
             throw new HttpResponseException(response()->json([
                 'errors' => [
-                    'messages' => ['Unauthorized!']
+                    'messages' => ['Token not found!']
                 ]
             ], 401));
         }
