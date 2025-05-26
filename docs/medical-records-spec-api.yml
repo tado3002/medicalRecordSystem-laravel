@@ -1,0 +1,528 @@
+openapi: "3.0.3"
+info:
+  title: API spec untuk memanajemen rekam medis
+  version: "1.0"
+servers:
+  - url: http://localhost:8000/api/medical_records
+security:
+  - bearerAuth: []
+
+paths:
+  /:
+    post:
+      description: endpoint untuk menambahkan medical record
+      requestBody:
+        content:
+          application/json:
+            examples:
+              sucess:
+                description: body request yang valid
+                value:
+                  patient_id: 1
+                  docter_id: 1
+                  date: 2025/05/30
+                  diagnosis: Lemah iman
+                  treatment: ibadah
+              error invalid request:
+                description: body request tidak valid
+                value:
+                  patient_id: ""
+                  docter_id: ""
+                  date:
+                  diagnosis:
+                  treatment:
+            schema:
+              $ref: "#/components/schemas/BodyRequest"
+
+      responses:
+        "201":
+          description: berhasil menambahkan rekam medis
+          content:
+            application/json:
+              example:
+                success: true
+                message: Berhasil menambahkan data!
+                data:
+                  id: 1
+                  date: 2025/05/30
+                  diagnosis: Lemah iman
+                  treatment: ibadah
+                  docter:
+                    id: 1
+                    specialization: Bedah rumah
+                    user:
+                      id: 1
+                      name: Muljono
+                      email: myEmail@gmail.com
+                      role: DOCTER
+                      phone: "081238082325"
+
+                  patient:
+                    id: 1
+                    name: Jokowee
+                    nik: "3514203109203330"
+                    birthday: 1978/09/01
+                    address: pasuruan, jawa timur
+                    phone: "081238082323"
+                    emergency_phone: "081238082324"
+              schema:
+                $ref: "#/components/schemas/Response"
+        "401":
+          description: Unauthorized error karena token tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"
+              example:
+                success: false
+                message: "Unauthenticated!"
+                data: null
+                errors:
+                  code: "UNAUTHORIZED"
+                  details: null
+        "422":
+          description: error invalid request karena body request tidak valid
+          content:
+            application/json:
+              example:
+                success: false
+                message: User request tidak valid!
+                data: null
+                errors:
+                  code: REQUEST_INVALID
+                  details:
+                    patient_id: ["The patient id field is required."]
+                    docter_id: ["The docter id field is required."]
+                    date: ["The date field is required."]
+                    diagnosis: ["The diagnosis field is required."]
+                    treatment: ["The treatment field is required."]
+
+              schema:
+                $ref: "#/components/schemas/Response"
+        "404":
+          description: Not found error karena patient id atau docter id tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"
+              example:
+                success: false
+                message: "Patient tidak ditemukan!"
+                data: null
+                errors:
+                  code: "NOT_FOUND"
+                  details: null
+  /{id}:
+    put:
+      parameters:
+        - in: path
+          example:
+          schema:
+            type: integer
+            minimum: 1
+          name: id
+          description: id medical record yang akan diupdate
+      description: endpoint untuk mengupdate rekam medis
+      requestBody:
+        content:
+          application/json:
+            examples:
+              sucess:
+                description: body request yang valid
+                value:
+                  diagnosis: Rendah diri
+              error invalid request:
+                description: body request tidak valid
+                value:
+                  diagnosis: ""
+            schema:
+              $ref: "#/components/schemas/BodyRequest"
+
+      responses:
+        "200":
+          description: berhasil mengupdate rekam medis
+          content:
+            application/json:
+              example:
+                success: true
+                message: Berhasil mengupdate data!
+                data:
+                  id: 1
+                  date: 2025/05/30
+                  diagnosis: Rendah diri
+                  treatment: ibadah
+                  docter:
+                    id: 1
+                    specialization: Bedah rumah
+                    user:
+                      id: 1
+                      name: Muljono
+                      email: myEmail@gmail.com
+                      role: DOCTER
+                      phone: "081238082325"
+
+                  patient:
+                    id: 1
+                    name: Jokowee
+                    nik: "3514203109203330"
+                    birthday: 1978/09/01
+                    address: pasuruan, jawa timur
+                    phone: "081238082323"
+                    emergency_phone: "081238082324"
+              schema:
+                $ref: "#/components/schemas/Response"
+        "401":
+          description: Unauthorized error karena token tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"
+              example:
+                success: false
+                message: "Unauthenticated!"
+                data: null
+                errors:
+                  code: "UNAUTHORIZED"
+                  details: null
+        "422":
+          description: error invalid request karena body request tidak valid
+          content:
+            application/json:
+              example:
+                success: false
+                message: User request tidak valid!
+                data: null
+                errors:
+                  code: REQUEST_INVALID
+                  details:
+                    diagnosis: ["The diagnosis field is required."]
+
+              schema:
+                $ref: "#/components/schemas/Response"
+        "404":
+          description: Not found error karena medical record id, patient id atau docter id tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"
+              example:
+                success: false
+                message: "Patient tidak ditemukan!"
+                data: null
+                errors:
+                  code: "NOT_FOUND"
+                  details: null
+    delete:
+      parameters:
+        - in: path
+          example:
+          schema:
+            type: integer
+            minimum: 1
+          name: id
+          description: id medical record yang akan dihapus
+
+      description: endpoint untuk menghapus medical record
+      responses:
+        "200":
+          description: berhasil menghapus medical record
+          content:
+            application/json:
+              example:
+                success: true
+                message: Berhasil menghapus data!
+                data:
+                  id: 1
+                  date: 2025/05/30
+                  diagnosis: Rendah diri
+                  treatment: ibadah
+                  docter:
+                    id: 1
+                    specialization: Bedah rumah
+                    user:
+                      id: 1
+                      name: Muljono
+                      email: myEmail@gmail.com
+                      role: DOCTER
+                      phone: "081238082325"
+
+                  patient:
+                    id: 1
+                    name: Jokowee
+                    nik: "3514203109203330"
+                    birthday: 1978/09/01
+                    address: pasuruan, jawa timur
+                    phone: "081238082323"
+                    emergency_phone: "081238082324"
+
+              schema:
+                $ref: "#/components/schemas/Response"
+        "401":
+          description: Unauthorized error karena token tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"
+              example:
+                success: false
+                message: "Unauthenticated!"
+                data: null
+                errors:
+                  code: "UNAUTHORIZED"
+                  details: null
+        "404":
+          description: Not found error karena medical record, patient id atau docter id tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"
+              example:
+                success: false
+                message: "Patient tidak ditemukan!"
+                data: null
+                errors:
+                  code: "NOT_FOUND"
+                  details: null
+  /search:
+    get:
+      parameters:
+        - in: query
+          name: page
+          description: Halaman hasil yang akan diambil
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - in: query
+          name: size
+          required: false
+          description: Jumlah data per halaman
+          schema:
+            type: integer
+            default: 10
+            minimum: 10
+        - in: query
+          name: docter_name
+          required: false
+          description: mencari data berdasarkan nama docter yang dicari
+          schema:
+            type: string
+            minLength: 4
+        - in: query
+          name: patient_name
+          required: false
+          description: mencari data berdasarkan nama patient yang dicari
+          schema:
+            type: string
+            minLength: 4
+      responses:
+        "200":
+          description: Berhasil mendapatkan data (default parameter)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponsePaginate"
+
+components:
+  schemas:
+    BodyRequest:
+      required:
+        - patient_id
+        - docter_id
+        - date
+        - diagnosis
+        - treatment
+
+      type: object
+      properties:
+        docter_id:
+          type: integer
+        patient_id:
+          type: integer
+        date:
+          type: string
+          format: dateTime
+        diagnosis:
+          type: string
+        treatment:
+          type: string
+    MedicalRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: 1
+        docter:
+          $ref: "#/components/schemas/Docter"
+        patient:
+          $ref: "#/components/schemas/Patient"
+        date:
+          type: string
+          format: dateTime
+        diagnosis:
+          type: string
+        treatment:
+          type: string
+    Response:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          nullable: true
+          $ref: "#/components/schemas/MedicalRecord"
+        errors:
+          type: object
+          nullable: true
+          properties:
+            code:
+              type: string
+            details:
+              type: object
+              nullable: true
+              properties:
+                field:
+                  type: array
+                  items:
+                    type: string
+    ResponsePaginate:
+      type: object
+      example:
+        success: true
+        message: Berhasil mendapatkan data!
+        data:
+          items:
+            - id: 1
+              date: 2025/05/30
+              diagnosis: Rendah diri
+              treatment: ibadah
+              docter:
+                id: 1
+                specialization: Bedah rumah
+                user:
+                  id: 1
+                  name: Muljono
+                  email: myEmail@gmail.com
+                  role: DOCTER
+                  phone: "081238082325"
+
+              patient:
+                id: 1
+                name: Jokowee
+                nik: "3514203109203330"
+                birthday: 1978/09/01
+                address: pasuruan, jawa timur
+                phone: "081238082323"
+                emergency_phone: "081238082324"
+
+          page:
+            total: 1
+            per_page: 10
+            current_page: 1
+            total_page: 1
+            links:
+              first: "http://localhost:8000/api/medical_records/search?page=1&&size=10"
+              last: "http://localhost:8000/api/medical_records/search?page=1&&size=10"
+              prev: null
+              next: null
+
+        errors: null
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            items:
+              $ref: "#/components/schemas/MedicalRecord"
+            page:
+              type: object
+              properties:
+                total:
+                  type: integer
+                per_page:
+                  type: integer
+                current_page:
+                  type: integer
+                total_page:
+                  type: integer
+                links:
+                  type: object
+                  properties:
+                    first:
+                      type: string
+                      nullable: true
+                    last:
+                      type: string
+                      nullable: true
+                    prev:
+                      type: string
+                      nullable: true
+                    next:
+                      type: string
+                      nullable: true
+    Patient:
+      type: object
+      properties:
+        id:
+          type: integer
+          uniqueItems: true
+        name:
+          type: string
+        nik:
+          type: string
+        birthday:
+          type: string
+          format: date
+        address:
+          type: string
+        gender:
+          type: string
+          enum:
+            - male
+            - female
+        phone:
+          type: string
+        emergency_phone:
+          type: string
+    Docter:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: 1
+        specialization:
+          type: string
+          minLength: 5
+        user:
+          $ref: "#/components/schemas/User"
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum:
+            - ADMIN
+            - NURSE
+            - DOCTER
+        phone:
+          type: string
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

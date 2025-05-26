@@ -1,10 +1,10 @@
 openapi: "3.0.3"
 info:
   title: Docter Specialization API
-  description: dokumentasi API untuk memanajamen data docter
+  description: dokumentasi API untuk memanajamen data pasien
   version: "1.0"
 servers:
-  - url: http://localhost:8000/api/docters
+  - url: http://localhost:8000/api/patients
 
 security:
   - bearerAuth: []
@@ -16,16 +16,26 @@ paths:
         content:
           application/json:
             example:
-              user_id: 1
-              specialization: Dokter bedah saraf
+              name: Jokowee
+              nik: "3514203109203330"
+              gender: male
+              birthday: 1972/04/01
+              address: solo, jawa tengah
+              phone: "083238082323"
+              emergency_phone: "081238082323"
             schema:
               required:
-                - user_id
-                - specialization
+                - name
+                - nik
+                - gender
+                - birthday
+                - address
+                - phone
+                - emergency_phone
               $ref: "#/components/schemas/RequestBody"
       responses:
         "201":
-          description: Berhasil menambahkan data docter
+          description: Berhasil menambahkan data patient
           content:
             application/json:
               example:
@@ -33,13 +43,15 @@ paths:
                 message: Berhasil menambahkan data!
                 data:
                   id: 1
-                  specialization: Dokter bedah saraf
-                  user:
-                    id: 1
-                    name: Muhammad Murtadlo
-                    email: myEmail@gmail.com
-                    phone: 0821418453
-                    role: DOCTER
+                  name: Jokowee
+                  nik: "3514203109203330"
+                  gender: "male"
+                  birthday: "1972/04/01"
+                  address: "solo, jawa tengah"
+                  phone: "083238082323"
+                  emergency_phone: "081238082323"
+
+                errors: null
 
               schema:
                 $ref: "#/components/schemas/Response"
@@ -56,20 +68,21 @@ paths:
                 errors:
                   code: "INVALID_REQUEST"
                   details:
-                    specialization: ["The specializaztion must not empty."]
-        "403":
-          description: Forbidden error karena role pada token bukan ADMIN
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Response"
-              example:
-                success: false
-                message: "Akses hanya untuk role ADMIN!"
-                data: null
-                errors:
-                  code: "FORBIDDEN"
-                  details: null
+                    name:
+                      - "The name field is required."
+                    nik:
+                      - "The nik field is required."
+                    birthday:
+                      - "The birthday field is required."
+                    gender:
+                      - "The gender field is required."
+                    address:
+                      - "The address field is required."
+                    phone:
+                      - "The phone field is required."
+                    emergency_phone:
+                      - "The emergency phone field is required."
+
         "401":
           description: Uauthorized error karena token tidak valid
           content:
@@ -83,21 +96,52 @@ paths:
                 errors:
                   code: "UNAUTHORIZED"
                   details: null
+
+  /{id}:
+    get:
+      parameters:
+        - in: query
+          name: id
+          required: true
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+          description: Data pasien berdasarkan id.
+
+      responses:
+        "200":
+          description: Data pasien yang berhasil ditemukan
+          content:
+            application/json:
+              example:
+                success: true
+                message: Berhasil mendapatkan data!
+                data:
+                  id: 1
+                  name: Jokowee
+                  nik: "3514203109203330"
+                  gender: "male"
+                  birthday: "1972/04/01"
+                  address: "solo, jawa tengah"
+                  phone: "083238082323"
+                  emergency_phone: "081238082323"
+                errors: null
+              schema:
+                $ref: "#/components/schemas/ResponsePaginate"
         "404":
-          description: Not found error karena user_id tidak ditemukan
+          description: Not found error karena parameter pasien id tidak ditemukan
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Response"
               example:
                 success: false
-                message: "User tidak ditemukan!"
+                message: "Patient tidak ditemukan!"
                 data: null
                 errors:
                   code: "NOT_FOUND"
                   details: null
-
-  /{id}:
     put:
       parameters:
         - in: query
@@ -106,19 +150,19 @@ paths:
             type: integer
             minimum: 1
             default: 1
-          description: Id docter yang ingin diupdate
+          description: Id patient yang akan diupdate
 
       requestBody:
         content:
           application/json:
+            example:
+              address: "pasuruan, jawa timur"
+              phone: "083238082324"
             schema:
-              example:
-                user_id: 1
-                specialization: "Dokter kaki"
               $ref: "#/components/schemas/RequestBody"
       responses:
-        "201":
-          description: Berhasil mengupdate data docter
+        "200":
+          description: Berhasil mengupdate data patient
           content:
             application/json:
               example:
@@ -126,13 +170,13 @@ paths:
                 message: Berhasil mengupdate data!
                 data:
                   id: 1
-                  specialization: Dokter kaki
-                  user:
-                    id: 1
-                    name: Muhammad Murtadlo
-                    email: myEmail@gmail.com
-                    phone: 0821418453
-                    role: DOCTER
+                  name: Jokowee
+                  nik: "3514203109203330"
+                  gender: "male"
+                  birthday: "1972/04/01"
+                  address: "pasuruan, jawa timur"
+                  phone: "083238082324"
+                  emergency_phone: "081238082323"
 
               schema:
                 $ref: "#/components/schemas/Response"
@@ -149,20 +193,10 @@ paths:
                 errors:
                   code: "INVALID_REQUEST"
                   details:
-                    specialization: ["The specializaztion must not empty."]
-        "403":
-          description: Forbidden error karena role pada token bukan ADMIN
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Response"
-              example:
-                success: false
-                message: "Akses hanya untuk role ADMIN!"
-                data: null
-                errors:
-                  code: "FORBIDDEN"
-                  details: null
+                    address:
+                      - "The address field is required."
+                    phone:
+                      - "The phone field is required."
         "401":
           description: Uauthorized error karena token tidak valid
           content:
@@ -177,19 +211,18 @@ paths:
                   code: "UNAUTHORIZED"
                   details: null
         "404":
-          description: Not found error karena user_id tidak ditemukan
+          description: Not found error karena parameter pasien id tidak ditemukan
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Response"
               example:
                 success: false
-                message: "User tidak ditemukan!"
+                message: "Patient tidak ditemukan!"
                 data: null
                 errors:
                   code: "NOT_FOUND"
                   details: null
-
     delete:
       parameters:
         - in: query
@@ -198,10 +231,10 @@ paths:
             type: integer
             minimum: 1
             default: 1
-          description: Id docter yang ingin diupdate
+          description: Id patient yang ingin dihapus
       responses:
         "200":
-          description: Berhasil menghapus data docter
+          description: Berhasil menghapus data patient
           content:
             application/json:
               example:
@@ -209,29 +242,17 @@ paths:
                 message: Berhasil menghapus data!
                 data:
                   id: 1
-                  specialization: Dokter kaki
-                  user:
-                    id: 1
-                    name: Muhammad Murtadlo
-                    email: myEmail@gmail.com
-                    phone: 0821418453
-                    role: DOCTER
+                  name: Jokowee
+                  nik: "3514203109203330"
+                  gender: "male"
+                  birthday: "1972/04/01"
+                  address: "pasuruan, jawa timur"
+                  phone: "083238082324"
+                  emergency_phone: "081238082323"
+                errors: null
+              schema:
+                $ref: "#/components/schemas/Response"
 
-              schema:
-                $ref: "#/components/schemas/Response"
-        "403":
-          description: Forbidden error karena role pada token bukan ADMIN
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Response"
-              example:
-                success: false
-                message: "Akses hanya untuk role ADMIN!"
-                data: null
-                errors:
-                  code: "FORBIDDEN"
-                  details: null
         "401":
           description: Uauthorized error karena token tidak valid
           content:
@@ -246,7 +267,7 @@ paths:
                   code: "UNAUTHORIZED"
                   details: null
         "404":
-          description: Not found error karena docter id tidak ditemukan
+          description: Not found error karena patient id di parameter tidak ditemukan
           content:
             application/json:
               schema:
@@ -280,16 +301,11 @@ paths:
           schema:
             type: string
           required: false
-          description: Nama dokter yang ingin dicari (opsional).
-        - in: query
-          name: specialization
-          schema:
-            type: string
-          required: false
-          description: Spesialisasi dokter yang ingin dicari (opsional).
+          description: Nama pasien yang ingin dicari (opsional).
+
       responses:
         "200":
-          description: Daftar dokter yang berhasil ditemukan
+          description: Daftar pasien yang berhasil ditemukan
           content:
             application/json:
               example:
@@ -298,23 +314,25 @@ paths:
                 data:
                   items:
                     - id: 1
-                      specialization: Dokter bedah saraf
-                      user:
-                        id: 1
-                        name: Muhammad Murtadlo
-                        email: myEmail@gmail.com
-                        phone: 0821418453
-                        role: DOCTER
+                      name: Jokowee
+                      nik: "3514203109203330"
+                      gender: "male"
+                      birthday: "1972/04/01"
+                      address: "solo, jawa tengah"
+                      phone: "083238082323"
+                      emergency_phone: "081238082323"
                   page:
                     total: 1
                     per_page: 10
                     current_page: 1
                     total_page: 1
                     links:
-                      first: http://localhost:8000/api/docters/search?page=1
-                      last: http://localhost:8000/api/docters/search?page=1
+                      first: http://localhost:8000/api/patients/search?page=1
+                      last: http://localhost:8000/api/patients/search?page=1
                       prev: null
                       next: null
+
+                errors: null
               schema:
                 $ref: "#/components/schemas/ResponsePaginate"
 
@@ -323,27 +341,49 @@ components:
     RequestBody:
       type: object
       properties:
-        user_id:
-          type: integer
-          minimum: 1
-        specialization:
+        name:
           type: string
-          minLength: 5
-      example:
-        user_id: 1
-        specialization: Dokter bedah saraf
+        nik:
+          type: string
+        birthday:
+          type: string
+          format: date
+        address:
+          type: string
+        gender:
+          type: string
+          enum:
+            - male
+            - female
+        phone:
+          type: string
+        emergency_phone:
+          type: string
 
-    Docter:
+    Patient:
       type: object
       properties:
         id:
           type: integer
-          minimum: 1
-        specialization:
+          uniqueItems: true
+        name:
           type: string
-          minLength: 5
-        user:
-          $ref: "#/components/schemas/User"
+        nik:
+          type: string
+        birthday:
+          type: string
+          format: date
+        address:
+          type: string
+        gender:
+          type: string
+          enum:
+            - male
+            - female
+        phone:
+          type: string
+        emergency_phone:
+          type: string
 
     Response:
       type: object
@@ -354,7 +394,7 @@ components:
           type: string
         data:
           nullable: true
-          $ref: "#/components/schemas/Docter"
+          $ref: "#/components/schemas/Patient"
         errors:
           type: object
           nullable: true
@@ -379,7 +419,7 @@ components:
             items:
               type: array
               items:
-                $ref: "#/components/schemas/Docter"
+                $ref: "#/components/schemas/Patient"
             page:
               type: object
               properties:
@@ -418,26 +458,6 @@ components:
               properties:
                 field:
                   type: array
-
-    User:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 1
-        name:
-          type: string
-        email:
-          type: string
-          format: email
-        role:
-          type: string
-          enum:
-            - ADMIN
-            - NURSE
-            - DOCTER
-        phone:
-          type: string
 
   securitySchemes:
     bearerAuth:
