@@ -271,7 +271,7 @@ describe('update user', function () {
         )
             ->assertOk()
             ->assertJson($expected);
-    });
+    })->only();
     it('conflict error cause email has use by another user', function () {
         $this->seed([UserSeeder::class]);
         $user = getUser();

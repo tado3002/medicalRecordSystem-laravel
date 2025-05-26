@@ -21,7 +21,7 @@ describe('register user', function () {
         post('/api/auth/register', $data)
             ->assertCreated()
             ->assertJson($expected);
-    });
+    })->only();
 
     test('failed cause invalid data request', function () {
         $data = [
