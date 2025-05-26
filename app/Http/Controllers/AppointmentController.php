@@ -11,7 +11,6 @@ use App\Models\Appointment;
 use App\Models\Docter;
 use App\Models\Patient;
 use Illuminate\Contracts\Database\Eloquent\Builder;
-use Illuminate\Http\Request;
 
 class AppointmentController extends Controller
 {
@@ -61,9 +60,9 @@ class AppointmentController extends Controller
         ]);
     }
 
-    public function search(AppointmentSearchRequest $appointmentCreateRequest)
+    public function search(AppointmentSearchRequest $appointmentSearchRequest)
     {
-        $request = $appointmentCreateRequest->validated();
+        $request = $appointmentSearchRequest->validated();
 
         $appointments = Appointment::where(function (Builder $builder) use ($request) {
             $docterName = $request['docter_name'] ?? null;
