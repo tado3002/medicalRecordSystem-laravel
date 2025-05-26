@@ -11,6 +11,7 @@ A full-featured backend API for managing medical records in a hospital setting. 
   - Docters (Specialization)
   - Patients
   - Medical Records
+  - Appointment
 - Relational data structure 
 - Search & filtering endpoints
 - Full test coverage with Pest
@@ -35,15 +36,30 @@ A full-featured backend API for managing medical records in a hospital setting. 
 - MySQL or MariaDB
 - Laravel CLI
 
-### Installation
+### Installation & Set Up Environtment
 
+install project and dependencies
 ```bash
 git clone https://github.com/tado3002/medicalRecordSystem-laravel.git
 cd medicalRecordSystem-laravel
-cp .env.example .env
 composer install
-php artisan key:generate
+cp .env.example .env
+```
+
+setup database environtment
+> Lalu ubah konfigurasi database di .env sesuai dengan lokalmu:
+```dotenv
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=hospital_system
+DB_USERNAME=root
+DB_PASSWORD=
+```
+seed database and running the project
+```bash
 php artisan migrate --seed
+php artisan serve
 ```
 
 ## API Documentation
