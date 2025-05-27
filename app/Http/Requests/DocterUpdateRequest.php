@@ -27,17 +27,4 @@ class DocterUpdateRequest extends FormRequest
             'specialization' => 'required|string|min:6'
         ];
     }
-    protected function failedValidation(Validator $validator)
-    {
-        throw new HttpResponseException(response()->json([
-            'success' => false,
-            'data' => null,
-            'message' => 'User request tidak valid!',
-            'errors' => [
-                'code' => 'INVALID_REQUEST',
-                'details' => $validator->getMessageBag()
-            ]
-
-        ], 422));
-    }
 }

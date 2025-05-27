@@ -33,17 +33,4 @@ class MedicalRecordCreateRequest extends FormRequest
             'treatment' => 'required|string',
         ];
     }
-
-    protected function failedValidation(Validator $validator)
-    {
-        throw new HttpResponseException(response()->json([
-            'success' => false,
-            'message' => 'User request tidak valid!',
-            'data' => null,
-            'errors' => [
-                'code' => 'REQUEST_INVALID',
-                'details' => $validator->getMessageBag()
-            ]
-        ], 422));
-    }
 }

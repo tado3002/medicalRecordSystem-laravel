@@ -1,12 +1,10 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Prescription;
 
-use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Http\Exceptions\HttpResponseException;
 
-class UserRegisterRequest extends FormRequest
+class PrescriptionCreateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,11 +22,11 @@ class UserRegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|min:4|max:100',
-            'email' => 'required|email|unique:users|max:100',
-            'password' => 'required|min:8|max:100',
-            'role' => ['required', 'in:NURSE,ADMIN,DOCTER'],
-            'phone' => 'required|min:10|max:15'
+            'medical_record_id' => ['required', 'integer', 'min:1'],
+            'medicine_name' => ['required', 'string', 'min:3', 'max:100'],
+            'dosage' => ['required', 'string', 'min:3', 'max:100'],
+            'frequency' => ['required', 'string', 'min:3', 'max:100'],
+            'notes' => ['required', 'string', 'min:3', 'max:255'],
         ];
     }
 }

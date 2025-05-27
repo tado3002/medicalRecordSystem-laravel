@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\ValidationException;
 
 class UserLoginRequest extends FormRequest
 {
@@ -27,17 +28,5 @@ class UserLoginRequest extends FormRequest
             'email' => 'required|max:100|email',
             'password' => 'required|min:8|max:100',
         ];
-    }
-    protected function failedValidation(Validator $validator)
-    {
-        throw new HttpResponseException(response([
-            'success' => false,
-            'message' => 'User request tidak valid!',
-            'errors' => [
-                'code' => 'BAD_REQUEST',
-                'details' => $validator->getMessageBag(),
-            ],
-            'data' => null
-        ], 400));
     }
 }

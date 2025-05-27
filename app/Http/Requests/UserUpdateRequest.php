@@ -32,19 +32,6 @@ class UserUpdateRequest extends FormRequest
         ];
     }
 
-    protected function failedValidation(Validator $validator)
-    {
-        throw new HttpResponseException(response([
-            'success' => false,
-            'message' => 'User request tidak valid!',
-            'errors' => [
-                'code' => 'BAD_REQUEST',
-                'details' => $validator->getMessageBag()
-            ],
-            'data' => null
-        ], 422));
-    }
-
     protected function failedAuthorization()
     {
         throw new HttpResponseException(response([

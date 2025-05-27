@@ -31,16 +31,4 @@ class AppointmentUpdateRequest extends FormRequest
             'notes' => 'sometimes|required',
         ];
     }
-    protected function failedValidation(Validator $validator)
-    {
-        throw new HttpResponseException(response()->json([
-            'success' => false,
-            'message' => 'User request tidak valid!',
-            'data' => null,
-            'errors' => [
-                'code' => 'BAD_REQUEST',
-                'details' => $validator->getMessageBag()
-            ]
-        ], 400));
-    }
 }

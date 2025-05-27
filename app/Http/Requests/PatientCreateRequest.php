@@ -33,17 +33,4 @@ class PatientCreateRequest extends FormRequest
             'emergency_phone' => 'required|min:6|max:15',
         ];
     }
-
-    protected function failedValidation(Validator $validator)
-    {
-        throw new HttpResponseException(response([
-            'success' => false,
-            'message' => 'User request tidak valid!',
-            'errors' => [
-                'code' => 'BAD_REQUEST',
-                'details' => $validator->getMessageBag()
-            ],
-            'data' => null
-        ], 400));
-    }
 }
