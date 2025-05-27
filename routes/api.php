@@ -7,6 +7,7 @@ use App\Http\Controllers\MedicalRecordController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\UsersController;
 use App\Http\Middleware\CustomAuthenticate;
+use App\Http\Middleware\FormatValidationException;
 use Illuminate\Support\Facades\Route;
 
 // auth route
