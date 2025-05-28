@@ -63,13 +63,6 @@ seed database and running the project
 php artisan migrate --seed
 php artisan serve
 ```
-Bagus, README kamu sudah rapi dan informatif. Saya akan bantu **tambahkan bagian khusus Docker** agar pembaca tahu cara menjalankan proyek ini menggunakan Docker.
-
-Berikut tambahan yang bisa langsung kamu salin dan **letakkan setelah bagian “Installation & Set Up Environment” atau sebelum “API Documentation”**:
-
----
-
-Kamu bisa salin bagian ini dan tambahkan ke README kamu. Jika kamu ingin saya bantu merge langsung ke isi file `README.md`, tinggal beri izin dan saya akan update dokumennya.
 
 ## API Documentation
 
