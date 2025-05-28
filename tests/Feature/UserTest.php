@@ -271,7 +271,7 @@ describe('update user', function () {
         )
             ->assertOk()
             ->assertJson($expected);
-    })->only();
+    });
     it('conflict error cause email has use by another user', function () {
         $this->seed([UserSeeder::class]);
         $user = getUser();
@@ -283,7 +283,7 @@ describe('update user', function () {
 
         $expected = responseError('User request tidak valid!', [
             'email' => ['The email has already been taken.']
-        ], 'BAD_REQUEST');
+        ], 'REQUEST_INVALID');
 
         put(
             "/api/users/{$user['id']}",

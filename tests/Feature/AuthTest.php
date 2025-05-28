@@ -21,7 +21,7 @@ describe('register user', function () {
         post('/api/auth/register', $data)
             ->assertCreated()
             ->assertJson($expected);
-    })->only();
+    });
 
     test('failed cause invalid data request', function () {
         $data = [
@@ -40,7 +40,7 @@ describe('register user', function () {
                 'password' => ["The password field must be at least 8 characters."],
                 'role' => ["The selected role is invalid."],
                 'phone' => ["The phone field must be at least 10 characters."]
-            ], 'VALIDATION_ERROR'));
+            ], 'REQUEST_INVALID'));
     });
 
     test('failed cause email is exist', function () {
@@ -56,7 +56,7 @@ describe('register user', function () {
             ->assertUnprocessable()
             ->assertJson(responseError('User request tidak valid!', [
                 'email' => ["The email has already been taken."],
-            ], 'VALIDATION_ERROR'));
+            ], 'REQUEST_INVALID'));
     });
 });
 
@@ -105,11 +105,11 @@ describe('user login', function () {
             'email' => 'test@gmail.com',
             'password' =>  ''
         ])
-            ->assertBadRequest()
+            ->assertUnprocessable()
             ->assertJson(
                 responseError('User request tidak valid!', [
                     'password' => ["The password field is required."]
-                ], 'BAD_REQUEST')
+                ], 'REQUEST_INVALID')
             );
         $token = getToken();
         assertNull($token);
@@ -121,11 +121,11 @@ describe('user login', function () {
             'email' => 'test',
             'password' =>  'testtesttest'
         ])
-            ->assertBadRequest()
+            ->assertUnprocessable()
             ->assertJson(
                 responseError('User request tidak valid!', [
                     'email' => ["The email field must be a valid email address."]
-                ], 'BAD_REQUEST')
+                ], 'REQUEST_INVALID')
             );
 
         $token = getToken();
