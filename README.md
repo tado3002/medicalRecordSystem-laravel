@@ -57,10 +57,19 @@ DB_USERNAME=root
 DB_PASSWORD=
 ```
 seed database and running the project
+> this seeding users account, with role admin, see Demo Account section below
+
 ```bash
 php artisan migrate --seed
 php artisan serve
 ```
+Bagus, README kamu sudah rapi dan informatif. Saya akan bantu **tambahkan bagian khusus Docker** agar pembaca tahu cara menjalankan proyek ini menggunakan Docker.
+
+Berikut tambahan yang bisa langsung kamu salin dan **letakkan setelah bagian “Installation & Set Up Environment” atau sebelum “API Documentation”**:
+
+---
+
+Kamu bisa salin bagian ini dan tambahkan ke README kamu. Jika kamu ingin saya bantu merge langsung ke isi file `README.md`, tinggal beri izin dan saya akan update dokumennya.
 
 ## API Documentation
 
@@ -86,4 +95,82 @@ Authorization: Bearer {token}
 | Role   | Email                                           | Password     |
 | ------ | ----------------------------------------------- | -------------|
 | Admin  | [test@gmail.com]                                | testtesttest |
+
+
+##  Docker Support
+
+Proyek ini dapat dijalankan menggunakan Docker untuk pengembangan yang lebih mudah dan konsisten.
+
+### ️ Setup Docker
+
+1. **Salin file `.env` dan konfigurasi:**
+
+```bash
+cp .env.example .env
+```
+
+Ubah konfigurasi `.env` agar sesuai Docker environment:
+
+```dotenv
+DB_CONNECTION=mysql
+DB_HOST=mysql
+DB_PORT=3306
+DB_DATABASE=hospital_system
+DB_USERNAME=laravel
+DB_PASSWORD=secret
+```
+
+2. **Jalankan container:**
+
+```bash
+docker-compose up -d --build
+```
+
+3. **Masuk ke container Laravel:**
+
+```bash
+docker exec -it laravel-app bash
+```
+
+4. **Jalankan Laravel server:**
+
+```bash
+php artisan serve --host=0.0.0.0 --port=8000
+```
+
+5. **Akses aplikasi dari browser/Postman:**
+
+```
+http://localhost:8000/api/*
+```
+
+---
+
+### Migrasi dan Seeder
+
+Masih di dalam container Laravel:
+
+```bash
+php artisan migrate --seed
+```
+
+---
+
+### Layanan yang Berjalan
+️
+| Service        | Port Lokal              | Fungsi                     |
+| -------------- | ----------------------- | -------------------------- |
+| Laravel App    | `http://localhost:8000` | Aplikasi backend Laravel   |
+| MySQL Database | `localhost:3306`        | Database untuk penyimpanan |
+
+---
+
+### Bersihkan
+
+```bash
+docker-compose down -v
+```
+
+---
+
 
