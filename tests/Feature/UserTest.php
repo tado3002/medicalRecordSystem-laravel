@@ -1,11 +1,10 @@
 <?php
 
-use App\Http\Resources\UserCollection;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Database\Seeders\UserCollectionSeeder;
 use Database\Seeders\UserSeeder;
 use Illuminate\Contracts\Database\Eloquent\Builder;
-use Illuminate\Http\JsonResponse;
 use Laravel\Sanctum\PersonalAccessToken;
 
 use function Pest\Laravel\delete;
@@ -109,7 +108,7 @@ describe('user paginate search by param [role,name]', function () {
         $this->seed([UserCollectionSeeder::class]);
 
         $token = createToken('device_vivo');
-        $userCollection = getUserCollectionResponse()->getData(true);
+        $userCollection = getUserCollectionResponse();
 
         $res = get('/api/users/search', [
             'Authorization' => "Bearer $token",
@@ -117,6 +116,7 @@ describe('user paginate search by param [role,name]', function () {
 
         assertEquals($userCollection['data']['items'], $res['data']['items']);
     });
+
     it('success pagination search by page 2 and size 20', function () {
         $this->seed([UserSeeder::class]);
         $this->seed([UserCollectionSeeder::class]);
@@ -125,7 +125,7 @@ describe('user paginate search by param [role,name]', function () {
         $userCollection = getUserCollectionResponse([
             'page' => 2,
             'size' => 20
-        ])->getData(true);
+        ]);
 
         $res = get('/api/users/search?page=2&&size=20', [
             'Authorization' => "Bearer $token",
@@ -140,7 +140,7 @@ describe('user paginate search by param [role,name]', function () {
         $token = createToken('device_vivo');
         $userCollection = getUserCollectionResponse([
             'role' => 'ADMIN'
-        ])->getData(true);
+        ]);
 
         $res = get('/api/users/search?role=ADMIN', [
             'Authorization' => "Bearer $token",
@@ -160,7 +160,7 @@ describe('user paginate search by param [role,name]', function () {
         $token = createToken('device_vivo');
         $userCollection = getUserCollectionResponse([
             'role' => 'DOCTER'
-        ])->getData(true);
+        ]);
 
         $res = get('/api/users/search?role=DOCTER', [
             'Authorization' => "Bearer $token",
@@ -180,7 +180,7 @@ describe('user paginate search by param [role,name]', function () {
         $token = createToken('device_vivo');
         $userCollection = getUserCollectionResponse([
             'role' => 'NURSE'
-        ])->getData(true);
+        ]);
 
         $res = get('/api/users/search?role=NURSE', [
             'Authorization' => "Bearer $token",
@@ -202,7 +202,7 @@ describe('user paginate search by param [role,name]', function () {
 
         $userCollection = getUserCollectionResponse([
             'name' => $userName
-        ])->getData(true);
+        ]);
 
 
         $res = get('/api/users/search?name=' . $userName, [
@@ -415,7 +415,7 @@ describe('delete user', function () {
 });
 
 
-function getUserCollectionResponse(array $params = []): JsonResponse
+function getUserCollectionResponse(array $params = [])
 {
     $page = $params['page'] ?? 1;
     $size = $params['size'] ?? 10;
@@ -429,9 +429,7 @@ function getUserCollectionResponse(array $params = []): JsonResponse
     })
         ->paginate(perPage: $size, page: $page);
 
-    $usersCollection = new UserCollection($users);
-    $res = responseSuccess('Berhasil mendapatkan data!', $usersCollection->toArray(request()));
-    return response()->json($res);
+    return responsePaginate('Berhasil mendapatkan data!', UserResource::collection($users));
 }
 function toUserResponse($data)
 {
@@ -447,7 +445,35 @@ function responseSuccess(string $message, $data, int $statusCode = 200)
     return [
         'success' => true,
         'message' => $message,
-        'data' => !empty($data['page']) ? $data : toUserResponse($data),
+        'data' =>  toUserResponse($data),
+        'errors' => null
+    ];
+}
+
+function fixLink($str)
+{
+    return $str ? str_replace('?', '/users?', $str) : null;
+}
+function responsePaginate($message, $data)
+{
+    return [
+        'success' => true,
+        'message' => $message,
+        'data' => [
+            'items' => $data->toArray(request()),
+            'page' => [
+                'total' => $data->total(),
+                'per_page' => $data->perPage(),
+                'current_page' => $data->currentPage(),
+                'total_page' => $data->lastPage(),
+                'links' => [
+                    'first' => fixLink($data->url(1)),
+                    'last' => fixLink($data->url($data->lastPage())),
+                    'prev' => fixLink($data->previousPageUrl()),
+                    'next' => fixLink($data->nextPageUrl()),
+                ]
+            ]
+        ],
         'errors' => null
     ];
 }

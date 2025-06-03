@@ -5,9 +5,9 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DocterController;
 use App\Http\Controllers\MedicalRecordController;
 use App\Http\Controllers\PatientController;
+use App\Http\Controllers\PrescriptionController;
 use App\Http\Controllers\UsersController;
 use App\Http\Middleware\CustomAuthenticate;
-use App\Http\Middleware\FormatValidationException;
 use Illuminate\Support\Facades\Route;
 
 // auth route
@@ -36,8 +36,6 @@ Route::middleware(['auth:sanctum', CustomAuthenticate::class])->group(function (
     Route::prefix('docters')->group(function () {
         Route::post('', [DocterController::class, 'create'])
             ->middleware('role:ADMIN');
-        Route::get('', [DocterController::class, 'findAll']);
-        Route::get('search', [DocterController::class, 'search']);
         Route::get('{id}', [DocterController::class, 'findOne'])
             ->where(['id' => '[0-9]+']);
         Route::put('{id}', [DocterController::class, 'update'])
@@ -46,6 +44,7 @@ Route::middleware(['auth:sanctum', CustomAuthenticate::class])->group(function (
         Route::delete('{id}', [DocterController::class, 'delete'])
             ->middleware('role:ADMIN')
             ->where(['id' => '[0-9]+']);
+        Route::get('search', [DocterController::class, 'search']);
     });
 
     // patients route
@@ -63,6 +62,7 @@ Route::middleware(['auth:sanctum', CustomAuthenticate::class])->group(function (
     // appointment route
     Route::prefix('appointments')->group(function () {
         Route::post('', [AppointmentController::class, 'create']);
+        Route::get('{id}', [AppointmentController::class, 'findOne']);
         Route::put('{id}', [AppointmentController::class, 'update'])
             ->where(['id' => '[0-9]+']);
         Route::delete('{id}', [AppointmentController::class, 'delete'])
@@ -72,12 +72,27 @@ Route::middleware(['auth:sanctum', CustomAuthenticate::class])->group(function (
 
     // medical_records route
     Route::prefix('medical_records')->group(function () {
-        Route::post('', [MedicalRecordController::class, 'create']);
+        Route::post('', [MedicalRecordController::class, 'create'])
+            ->middleware('role:DOCTER');
         Route::get('{id}', [MedicalRecordController::class, 'findOne'])
             ->where(['id' => '[0-9]+']);
         Route::put('{id}', [MedicalRecordController::class, 'update'])
-            ->where(['id' => '[0-9]+']);
+            ->where(['id' => '[0-9]+'])
+            ->middleware('role:DOCTER');
         Route::delete('{id}', [MedicalRecordController::class, 'delete'])
+            ->where(['id' => '[0-9]+'])
+            ->middleware('role:DOCTER');
+    });
+
+    // prescriptions route
+    Route::prefix('prescriptions')->group(function () {
+        Route::get('', [PrescriptionController::class, 'findAll']);
+        Route::post('', [PrescriptionController::class, 'create']);
+        Route::get('{id}', [PrescriptionController::class, 'findOne'])
+            ->where(['id' => '[0-9]+']);
+        Route::put('{id}', [PrescriptionController::class, 'update'])
+            ->where(['id' => '[0-9]+']);
+        Route::delete('{id}', [PrescriptionController::class, 'delete'])
             ->where(['id' => '[0-9]+']);
     });
 });

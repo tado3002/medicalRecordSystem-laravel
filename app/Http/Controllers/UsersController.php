@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\UserSearchRequest;
 use App\Http\Requests\UserUpdateRequest;
-use App\Http\Resources\UserCollection;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Contracts\Database\Eloquent\Builder;
@@ -38,11 +37,10 @@ class UsersController extends Controller
         })
             ->paginate(perPage: $request['size'], page: $request['page']);
 
-        $usersCollection = new UserCollection($users);
 
         return $this->responseSuccessPaginate(
             'Berhasil mendapatkan data!',
-            $usersCollection->toArray(request())
+            UserResource::collection($users)
         );
     }
     public function update(int $id, UserUpdateRequest $userUpdateRequest)
