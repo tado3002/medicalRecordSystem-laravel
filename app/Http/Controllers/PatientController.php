@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\PatientCreateRequest;
 use App\Http\Requests\PatientUpdateRequest;
-use App\Http\Resources\PatientCollection;
 use App\Http\Resources\PatientResource;
 use App\Models\Patient;
 use Illuminate\Contracts\Database\Query\Builder;
@@ -68,10 +67,9 @@ class PatientController extends Controller
             if (!empty($name)) $builder->where('name', 'like', "%$name%");
         })->paginate($size, page: $page);
 
-        $patientCollection = new PatientCollection($patients);
-        return $this->responseSuccess(
+        return $this->responseSuccessPaginate(
             'Berhasil mendapatkan data!',
-            $patientCollection->toArray(request())
+            PatientResource::collection($patients)
 
         );
     }

@@ -18,7 +18,7 @@ class PatientFactory extends Factory
     {
         return [
             'name' => fake()->name(),
-            'nik' => '351420310903' . fake()->randomNumber(3),
+            'nik' => fake()->numerify(str_repeat('#', 16)),
             'gender' => fake()->randomElement(['male', 'female']),
             'birthday' => fake()->date(),
             'address' => fake()->address(),

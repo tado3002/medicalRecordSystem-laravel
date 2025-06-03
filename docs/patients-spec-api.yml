@@ -4,13 +4,13 @@ info:
   description: dokumentasi API untuk memanajamen data pasien
   version: "1.0"
 servers:
-  - url: http://localhost:8000/api/patients
+  - url: http://localhost:8000/api
 
 security:
   - bearerAuth: []
 
 paths:
-  /:
+  /patients:
     post:
       requestBody:
         content:
@@ -97,7 +97,7 @@ paths:
                   code: "UNAUTHORIZED"
                   details: null
 
-  /{id}:
+  /patients/{id}:
     get:
       parameters:
         - in: query
@@ -279,7 +279,7 @@ paths:
                 errors:
                   code: "NOT_FOUND"
                   details: null
-  /search:
+  /patients/search:
     get:
       parameters:
         - in: query

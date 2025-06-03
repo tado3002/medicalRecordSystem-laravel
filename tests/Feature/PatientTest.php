@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Resources\PatientResource;
 use App\Models\Patient;
 use App\Models\User;
 use Database\Seeders\PatientSeeder;
@@ -43,7 +44,7 @@ describe('create patient test', function () {
         post('/api/patients', $dataPatient, [
             'Authorization' => 'Bearer ' . $token,
             'Accept' => 'application/json'
-        ])->assertBadRequest()->assertJson(failedResponse('User request tidak valid!', $invalidFields, 'BAD_REQUEST'));
+        ])->assertUnprocessable()->assertJson(failedResponse('User request tidak valid!', $invalidFields, 'REQUEST_INVALID'));
     });
     test('unauthenticated error response cause token not set ', function () use ($dataPatient) {
         post('/api/patients', $dataPatient, [
@@ -265,20 +266,22 @@ describe('search patients', function () {
     test('success get patient with name like "dr"', function () {
         $token = getToken();
         $this->seed([PatientSeeder::class]);
-        $patients = getPatient(name: 'dr');
+        $expected = responsePaginate('Berhasil mendapatkan data!', getPatient(name: 'dr'));
 
         $res = get('/api/patients/search?name=dr', [
             'Authorization' => 'Bearer ' . $token
         ])->assertOk()->json();
-        assertEquals(sizeof($patients['data']), sizeof($res['data']['items']));
+        assertEquals($expected, $res);
     });
 });
 
-function getPatient($id = null, $name = null, $page = 1, $size = 10): array | null
+function getPatient($id = null, $name = null, $page = 1, $size = 10)
 {
     if (!$name) return Patient::where('id', $id)->first()?->toArray();
-    return Patient::where('name', 'like', "%$name%")
-        ->paginate($size, page: $page)?->toArray();
+
+    $patients = Patient::where('name', 'like', "%$name%")
+        ->paginate($size, page: $page);
+    return PatientResource::collection($patients);
 }
 function createPatient($data): array
 {
@@ -319,4 +322,31 @@ function getToken()
     $user = User::create($data);
     $token = $user->createToken('token_test')->plainTextToken;
     return $token;
+}
+function fixLink($str)
+{
+    return $str ? str_replace('?', '/api/patients/search?', $str) : null;
+}
+function responsePaginate($message, $data)
+{
+    return [
+        'success' => true,
+        'message' => $message,
+        'data' => [
+            'items' => $data->toArray(request()),
+            'page' => [
+                'total' => $data->total(),
+                'per_page' => $data->perPage(),
+                'current_page' => $data->currentPage(),
+                'total_page' => $data->lastPage(),
+                'links' => [
+                    'first' => fixLink($data->url(1)),
+                    'last' => fixLink($data->url($data->lastPage())),
+                    'prev' => fixLink($data->previousPageUrl()),
+                    'next' => fixLink($data->nextPageUrl()),
+                ]
+            ]
+        ],
+        'errors' => null
+    ];
 }
