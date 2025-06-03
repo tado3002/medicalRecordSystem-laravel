@@ -35,6 +35,15 @@ class AppointmentController extends Controller
         );
     }
 
+    public function findOne(int $id)
+    {
+        $appoinment = $this->throwNotFoundIfAppointmentNotExist($id);
+        return $this->responseSuccess(
+            'Berhasil mendapatkan data!',
+            new AppointmentResource($appoinment)
+        );
+    }
+
     public function update(int $id, AppointmentUpdateRequest $appointmentUpdateRequest)
     {
         $data = $appointmentUpdateRequest->validated();
@@ -90,11 +99,10 @@ class AppointmentController extends Controller
         })
             ->paginate($request['size'], page: $request['page']);
 
-        $appoinments = new AppointmentCollection($appointments);
 
         return $this->responseSuccessPaginate(
             'Berhasil mendapatkan data!',
-            $appoinments->toArray(request())
+            AppointmentResource::collection($appointments)
         );
     }
 

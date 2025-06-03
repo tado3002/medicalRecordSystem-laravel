@@ -3,12 +3,12 @@ info:
   title: API spec untuk memanajemen appointment (janji temu)
   version: "1.0"
 servers:
-  - url: http://localhost:8000/api/appointments
+  - url: http://localhost:8000/api
 security:
   - bearerAuth: []
 
 paths:
-  /:
+  /appointments:
     post:
       description: endpoint untuk menambahkan appointment
       requestBody:
@@ -112,7 +112,64 @@ paths:
                 errors:
                   code: "NOT_FOUND"
                   details: null
-  /{id}:
+  /appointments/{id}:
+    get:
+      parameters:
+        - in: path
+          name: id
+          description: Id yang digunakan untuk mencari appointment
+          example: 1
+          schema:
+            type: integer
+            minimum: 1
+          required: true
+      responses:
+        "200":
+          description: Berhasil mendapatkan data appointment berdasarkan ID
+          content:
+            application/json:
+              example:
+                success: true
+                message: Berhasil menambahkan data!
+                data:
+                  id: 1
+                  date: 2025/05/30
+                  notes: Cek gula darah
+                  status: confirmed
+                  docter:
+                    id: 1
+                    specialization: Bedah rumah
+                    user:
+                      id: 1
+                      name: Muljono
+                      email: myEmail@gmail.com
+                      role: DOCTER
+                      phone: "081238082325"
+
+                  patient:
+                    id: 1
+                    name: Jokowee
+                    nik: "3514203109203330"
+                    birthday: 1978/09/01
+                    address: pasuruan, jawa timur
+                    phone: "081238082323"
+                    emergency_phone: "081238082324"
+              schema:
+                $ref: "#/components/schemas/Response"
+        "404":
+          description: Not found error karena appointment berdasarkan ID tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"
+              example:
+                success: false
+                message: "Appointment tidak ditemukan!"
+                data: null
+                errors:
+                  code: "NOT_FOUND"
+                  details: null
+
     put:
       parameters:
         - in: path
