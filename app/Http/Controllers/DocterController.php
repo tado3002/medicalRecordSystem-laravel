@@ -45,7 +45,7 @@ class DocterController extends Controller
     public function findAll()
     {
         $docters = Docter::all();
-        $docterCollection = new DocterCollection($docters);
+        $docterCollection = DocterResource::collection($docters);
         return $this->responseSuccess(
             'Berhasil mendapatkan data!',
             $docterCollection
@@ -92,10 +92,9 @@ class DocterController extends Controller
         $docters = $docters
             ->paginate($size, page: $page);
 
-        $docterCollection =  new DocterCollection($docters);
-        return $this->responseSuccess(
+        return $this->responseSuccessPaginate(
             'Berhasil mendapatkan data!',
-            $docterCollection->toArray(request())
+            DocterResource::collection($docters)
         );
     }
 

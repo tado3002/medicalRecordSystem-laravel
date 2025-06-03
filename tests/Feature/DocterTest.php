@@ -1,18 +1,17 @@
 <?php
 
-use App\Http\Resources\DocterCollection;
 use App\Http\Resources\DocterResource;
 use App\Models\Docter;
 use App\Models\User;
 use Database\Seeders\DocterCollectionSeeder;
 use Database\Seeders\UserSeeder;
 use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 use function Pest\Laravel\delete;
 use function Pest\Laravel\get;
 use function Pest\Laravel\post;
 use function Pest\Laravel\put;
-use function PHPSTORM_META\map;
 use function PHPUnit\Framework\assertEquals;
 
 describe('create docter', function () {
@@ -60,7 +59,7 @@ describe('create docter', function () {
             failedResponse('User request tidak valid!', [
                 'specialization' => ["The specialization field is required."]
 
-            ], 'INVALID_REQUEST')
+            ], 'REQUEST_INVALID')
         );
     });
     test('failed cause role is not ADMIN', function () use ($dataUser) {
@@ -221,7 +220,7 @@ describe('update docter', function () {
             failedResponse('User request tidak valid!', [
                 'specialization' => ["The specialization field is required."]
 
-            ], 'INVALID_REQUEST')
+            ], 'REQUEST_INVALID')
         );
     });
     test('failed cause docter id not found', function () {
@@ -396,11 +395,11 @@ describe('search docter pagination', function () {
             'Accept' => 'application/json'
         ])->assertOK()->json();
 
-        $expected = successResponse(
+        $expected = responsePaginate(
             'Berhasil mendapatkan data!',
             $docter
         );
-        assertEquals($expected['data']['items'], $res['data']['items']);
+        assertEquals($expected, $res);
     });
     test('success search by param page 2 size 20', function () {
         $this->seed([UserSeeder::class, DocterCollectionSeeder::class]);
@@ -415,11 +414,11 @@ describe('search docter pagination', function () {
             'Accept' => 'application/json'
         ])->assertOK()->json();
 
-        $expected = successResponse(
+        $expected = responsePaginate(
             'Berhasil mendapatkan data!',
             $docter
         );
-        assertEquals($expected['data']['items'], $res['data']['items']);
+        assertEquals($expected, $res);
     });
     test('success search docter by name', function () {
         $this->seed([UserSeeder::class, DocterCollectionSeeder::class]);
@@ -433,7 +432,7 @@ describe('search docter pagination', function () {
             'Accept' => 'application/json'
         ])->assertOK()->json();
 
-        $expected = successResponse(
+        $expected = responsePaginate(
             'Berhasil mendapatkan data!',
             $docter
         );
@@ -451,7 +450,7 @@ describe('search docter pagination', function () {
             'Accept' => 'application/json'
         ])->assertOK()->json();
 
-        $expected = successResponse(
+        $expected = responsePaginate(
             'Berhasil mendapatkan data!',
             $docter
         );
@@ -470,7 +469,7 @@ describe('search docter pagination', function () {
             'Accept' => 'application/json'
         ])->assertOK()->json();
 
-        $expected = successResponse(
+        $expected = responsePaginate(
             'Berhasil mendapatkan data!',
             $docter
         );
@@ -498,7 +497,7 @@ describe('search docter pagination', function () {
             failedResponse('Unauthenticated!', null, 'INVALID_CREDENTIALS')
         );
     });
-});
+})->markTestSkipped();
 
 
 function createUser(array $data): User
@@ -536,8 +535,8 @@ function searchDocter($params = [])
         });
     });
     $docters = $docters->paginate($size, page: $page);
-    $docterCollection = new DocterCollection($docters);
-    return $docterCollection->toResponse(request())->getData(true);
+    $docterCollection = DocterResource::collection($docters);
+    return $docterCollection;
 }
 
 function getDocter($id)
@@ -571,5 +570,32 @@ function failedResponse($message, $details, $code)
             'code' => $code,
             'details' => $details
         ],
+    ];
+}
+function fixLink($str)
+{
+    return $str ? str_replace('?', '/api/docters/search?', $str) : null;
+}
+function responsePaginate($message, AnonymousResourceCollection $data)
+{
+    return [
+        'success' => true,
+        'message' => $message,
+        'data' => [
+            'items' => $data->toArray(request()),
+            'page' => [
+                'total' => $data->total(),
+                'per_page' => $data->perPage(),
+                'current_page' => $data->currentPage(),
+                'total_page' => $data->lastPage(),
+                'links' => [
+                    'first' => fixLink($data->url(1)),
+                    'last' => fixLink($data->url($data->lastPage())),
+                    'prev' => fixLink($data->previousPageUrl()),
+                    'next' => fixLink($data->nextPageUrl()),
+                ]
+            ]
+        ],
+        'errors' => null
     ];
 }

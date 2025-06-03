@@ -4,13 +4,13 @@ info:
   description: dokumentasi API untuk memanajamen data docter
   version: "1.0"
 servers:
-  - url: http://localhost:8000/api/docters
+  - url: http://localhost:8000/api
 
 security:
   - bearerAuth: []
 
 paths:
-  /:
+  /docters:
     post:
       requestBody:
         content:
@@ -58,18 +58,30 @@ paths:
                   details:
                     specialization: ["The specializaztion must not empty."]
         "403":
-          description: Forbidden error karena role pada token bukan ADMIN
+          description: Forbidden error karena role pada token bukan ADMIN atau role user_id bukan DOCTER
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Response"
-              example:
-                success: false
-                message: "Akses hanya untuk role ADMIN!"
-                data: null
-                errors:
-                  code: "FORBIDDEN"
-                  details: null
+              examples:
+                "role ADMIN middleware":
+                  description: Error karena role user yang menambahkan bukan ADMIN
+                  value:
+                    success: false
+                    message: "Akses hanya untuk role ADMIN!"
+                    data: null
+                    errors:
+                      code: "FORBIDDEN"
+                      details: null
+                "user_id role validation":
+                  description: Error karena role user yang akan berelasi dengan docter bukan DOCTER
+                  value:
+                    success: false
+                    message: "Akses hanya untuk role ADMIN!"
+                    data: null
+                    errors:
+                      code: "FORBIDDEN"
+                      details: null
         "401":
           description: Uauthorized error karena token tidak valid
           content:
@@ -97,7 +109,49 @@ paths:
                   code: "NOT_FOUND"
                   details: null
 
-  /{id}:
+  /docters/{id}:
+    get:
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Id docter yang ingin dicari
+      responses:
+        "200":
+          description: Berhasil mendapatkan data docter berdasarkan ID
+          content:
+            application/json:
+              example:
+                success: true
+                message: Berhasil mendapatkan data!
+                data:
+                  id: 1
+                  specialization: Dokter bedah saraf
+                  user:
+                    id: 1
+                    name: Muhammad Murtadlo
+                    email: myEmail@gmail.com
+                    phone: 0821418453
+                    role: DOCTER
+              schema:
+                $ref: "#/components/schemas/Response"
+        "404":
+          description: Not found error karena docter berdasarkan ID tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"
+              example:
+                success: false
+                message: "Docter tidak ditemukan!"
+                data: null
+                errors:
+                  code: "NOT_FOUND"
+                  details: null
+
     put:
       parameters:
         - in: query
@@ -105,7 +159,6 @@ paths:
           schema:
             type: integer
             minimum: 1
-            default: 1
           description: Id docter yang ingin diupdate
 
       requestBody:
@@ -258,7 +311,7 @@ paths:
                 errors:
                   code: "NOT_FOUND"
                   details: null
-  /search:
+  /docters/search:
     get:
       parameters:
         - in: query

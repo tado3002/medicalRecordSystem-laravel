@@ -3,28 +3,40 @@
 namespace App\Http\Controllers;
 
 use App\Models\Docter;
+use App\Models\MedicalRecord;
 use App\Models\Patient;
+use App\Models\Prescription;
 use App\Models\User;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 
 abstract class Controller
 {
-    public function paginate($response)
+    public function paginate(ResourceCollection $response)
     {
         return [
-            'currentPage' => $response->currentPage(),
-            'itemPerPage' => $response->perPage(),
-            'totalItem' => $response->total(),
-            'Links' => $response->links(),
+            'total' => $response->total(),
+            'per_page' => $response->perPage(),
+            'current_page' => $response->currentPage(),
+            'total_page' => $response->lastPage(),
+            'links' => [
+                'first' => $response->url(1),
+                'last' => $response->url($response->lastPage()),
+                'prev' => $response->previousPageUrl(),
+                'next' => $response->nextPageUrl(),
+            ]
         ];
     }
 
-    public function responseSuccessPaginate(string $message, $data, int $statusCode = 200)
+    public function responseSuccessPaginate(string $message, ResourceCollection $data, int $statusCode = 200)
     {
         return response()->json([
             'success' => true,
             'message' => $message,
-            'data' => $data,
+            'data' => [
+                'items' => $data->toArray(request()),
+                'page' => $this->paginate($data)
+            ],
             'errors' => null
         ], $statusCode);
     }
@@ -71,5 +83,19 @@ abstract class Controller
         if ($patient) return $patient;
 
         $this->responseError('Patient tidak ditemukan!', 'NOT_FOUND', 404);
+    }
+    function throwNotFoundIfMedicalRecordNotFound(int $id): MedicalRecord
+    {
+        $medicalRecord = MedicalRecord::find($id);
+        if ($medicalRecord) return $medicalRecord;
+
+        $this->responseError('Medical Record tidak ditemukan!', 'NOT_FOUND', 404);
+    }
+    function throwNotFoundIfPrescriptionNotFound(int $id): Prescription
+    {
+        $prescription = Prescription::find($id);
+        if ($prescription) return $prescription;
+
+        $this->responseError('Prescription tidak ditemukan!', 'NOT_FOUND', 404);
     }
 }
