@@ -19,7 +19,7 @@ class MedicalRecordResource extends JsonResource
             'date' => $this->date,
             'diagnosis' => $this->diagnosis,
             'treatment' => $this->treatment,
-            'patient' => new UserResource($this->patient),
+            'patient' => new PatientResource($this->patient),
             'docter' => new DocterResource($this->docter)
         ];
     }

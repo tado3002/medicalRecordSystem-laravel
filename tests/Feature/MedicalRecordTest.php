@@ -23,11 +23,11 @@ describe('create medical record', function () {
         'treatment' => fake()->text(20)
     ];
     test('success', function () use ($medicalRecordData) {
-        $this->seed([UserSeeder::class]);
-        $token = getToken();
-
         $docter = createDocter();
         $patient = createPatient();
+
+        $token = createTokenFromDocter($docter['id']);
+
         $res = post('/api/medical_records', [
             ...$medicalRecordData,
             'docter_id' => $docter['id'],
@@ -39,11 +39,36 @@ describe('create medical record', function () {
         $expected = successResponse('Berhasil menambahkan data!', getMedicalRecord($res['data']['id']));
         assertEquals($expected, $res);
     });
-    test('not found error cause docter id doesnt exist', function () use ($medicalRecordData) {
-        $this->seed([UserSeeder::class]);
+    test('forbidden error cause user didnt have docter specialization', function () use ($medicalRecordData) {
+        $docter1 = createDocter();
+        $docter2 = createDocter();
+
+        $patient = createPatient();
+        $token = createTokenFromDocter($docter1['id']);
+        post('/api/medical_records', [
+            ...$medicalRecordData,
+            'patient_id' => $patient['id'],
+            'docter_id' => $docter2['id']
+        ], ['Authorization' => "Bearer $token"])->assertForbidden();
+    });
+    test('forbidden error cause user role is not DOCTER', function () use ($medicalRecordData) {
+        $this->seed(UserSeeder::class);
         $token = getToken();
 
         $docter = createDocter();
+        $patient = createPatient();
+
+        post('/api/medical_records', [
+            ...$medicalRecordData,
+            'patient_id' => $patient['id'],
+            'docter_id' => $docter['id']
+        ], ['Authorization' => "Bearer $token"])->assertForbidden()->assertJson(
+            failedResponse('Hanya untuk role DOCTER!', null, 'FORBIDDEN')
+        );
+    });
+    test('not found error cause docter id doesnt exist', function () use ($medicalRecordData) {
+        $docter = createDocter();
+        $token = createTokenFromDocter($docter['id']);
         $patient = createPatient();
         post('/api/medical_records', [
             ...$medicalRecordData,
@@ -60,11 +85,9 @@ describe('create medical record', function () {
         );
     });
     test('not found error cause patient id doesnt exist', function () use ($medicalRecordData) {
-        $this->seed([UserSeeder::class]);
-        $token = getToken();
-
         $docter = createDocter();
         $patient = createPatient();
+        $token = createTokenFromDocter($docter['id']);
         post('/api/medical_records', [
             ...$medicalRecordData,
             'docter_id' => $docter['id'],
@@ -80,11 +103,9 @@ describe('create medical record', function () {
         );
     });
     test('invalid request error cause user request is not valid', function () use ($medicalRecordData) {
-        $this->seed([UserSeeder::class]);
-        $token = getToken();
-
         $docter = createDocter();
         $patient = createPatient();
+        $token = createTokenFromDocter($docter['id']);
         post('/api/medical_records', [
             'date' => '01340',
             'diagnosis' => '',
@@ -103,11 +124,9 @@ describe('create medical record', function () {
         );
     });
     test('unauthorized error cause token is missing', function () use ($medicalRecordData) {
-        $this->seed([UserSeeder::class]);
-        $token = getToken();
-
         $docter = createDocter();
         $patient = createPatient();
+        $token = createTokenFromDocter($docter['id']);
         post('/api/medical_records', [
             'date' => '01340',
             'diagnosis' => '',
@@ -125,11 +144,9 @@ describe('create medical record', function () {
         );
     });
     test('unauthorized error cause token is invalid', function () use ($medicalRecordData) {
-        $this->seed([UserSeeder::class]);
-        $token = getToken();
-
         $docter = createDocter();
         $patient = createPatient();
+        $token = createTokenFromDocter($docter['id']);
         post('/api/medical_records', [
             'date' => '01340',
             'diagnosis' => '',
@@ -208,11 +225,9 @@ describe('get medical record by id', function () {
 
 describe('update medical record', function () {
     test('success', function () {
-        $this->seed([UserSeeder::class]);
-        $token = getToken();
-
         $docter = createDocter();
         $medicalRecord = createMedicalRecord();
+        $token = createTokenFromDocter($docter['id']);
 
         $res = put('/api/medical_records/' . $medicalRecord['id'], [
             'docter_id' => $docter['id'],
@@ -225,11 +240,23 @@ describe('update medical record', function () {
         $expected = successResponse('Berhasil mengupdate data!', getMedicalRecord($medicalRecord['id']));
         assertEquals($expected, $res);
     });
-    test('not found error cause docter id doesnt exist', function () {
-        $this->seed([UserSeeder::class]);
-        $token = getToken();
+    test('forbidden error cause user didnt have docter specialization', function () {
+        $docter1 = createDocter();
+        $docter2 = createDocter();
 
+        $patient = createPatient();
         $medicalRecord = createMedicalRecord();
+        $token = createTokenFromDocter($docter1['id']);
+        put('/api/medical_records/' . $medicalRecord['id'], [
+            'patient_id' => $patient['id'],
+            'docter_id' => $docter2['id']
+        ], ['Authorization' => "Bearer $token"])->assertForbidden();
+    });
+    test('not found error cause docter id doesnt exist', function () {
+        $docter = createDocter();
+        $medicalRecord = createMedicalRecord();
+        $token = createTokenFromDocter($docter['id']);
+
         put('/api/medical_records/' . $medicalRecord['id'], [
             'docter_id' => $medicalRecord['docter']['id'] + 1,
         ], [
@@ -243,10 +270,10 @@ describe('update medical record', function () {
         );
     });
     test('not found error cause patient id doesnt exist', function () {
-        $this->seed([UserSeeder::class]);
-        $token = getToken();
-
+        $docter = createDocter();
         $medicalRecord = createMedicalRecord();
+        $token = createTokenFromDocter($docter['id']);
+
         put('/api/medical_records/' . $medicalRecord['id'], [
             'patient_id' => $medicalRecord['patient']['id'] + 1
         ], [
@@ -260,11 +287,11 @@ describe('update medical record', function () {
         );
     });
     test('not found error cause medical record id doesnt exist', function () {
-        $this->seed([UserSeeder::class]);
-        $token = getToken();
-
+        $docter = createDocter();
         $medicalRecord = createMedicalRecord();
+        $token = createTokenFromDocter($docter['id']);
         $patient = createPatient();
+
         put('/api/medical_records/' . $medicalRecord['id'] + 1, [
             'patient_id' => $patient['id']
         ], [
@@ -278,12 +305,12 @@ describe('update medical record', function () {
         );
     });
     test('invalid request error cause user request is not valid', function () {
-        $this->seed([UserSeeder::class]);
-        $token = getToken();
-
         $docter = createDocter();
-        $patient = createPatient();
         $medicalRecord = createMedicalRecord();
+        $token = createTokenFromDocter($docter['id']);
+        $patient = createPatient();
+
+
         put('/api/medical_records/' . $medicalRecord['id'], [
             'date' => '01340',
             'diagnosis' => '',
@@ -297,7 +324,7 @@ describe('update medical record', function () {
                 'diagnosis' => ["The diagnosis field is required."],
                 'date' => ["The date field must be a valid date."],
                 'treatment' => ["The treatment field is required."],
-            ], 'INVALID_REQUEST')
+            ], 'REQUEST_INVALID')
         );
     });
     test('unauthorized error cause token is missing', function () {
@@ -343,21 +370,33 @@ describe('update medical record', function () {
 
 describe('delete medical record', function () {
     test('success', function () {
-        $this->seed([UserSeeder::class]);
-        $token = getToken();
-        $medicalRecord = createMedicalRecord();
+        $docter = createDocter();
+        $token = createTokenFromDocter($docter['id']);
+        $medicalRecord = createMedicalRecord($docter['id']);
         delete('/api/medical_records/' . $medicalRecord['id'], headers: [
             'Authorization' => "Bearer $token",
-        ])->assertOk()->assertJson(successResponse('Berhasil menghapus data!', $medicalRecord));
+        ])->assertOk()
+            ->assertJson(successResponse('Berhasil menghapus data!', $medicalRecord));
         assertNull(getMedicalRecord($medicalRecord['id']));
     });
-    test('not found error cause medical record not exist', function () {
-        $this->seed([UserSeeder::class]);
+    test('forbidden cause user role is not DOCTER', function () {
+        $this->seed(UserSeeder::class);
         $token = getToken();
+        $medicalRecord = createMedicalRecord();
+        delete(
+            '/api/medical_records/' . $medicalRecord['id'],
+            headers: ['Authorization' => "Bearer $token"]
+
+        )->assertForbidden()->json(failedResponse('Hanya untuk role DOCTER!', null, 'FORBIDDEN'));
+    });
+    test('not found error cause medical record not exist', function () {
+        $docter = createDocter();
+        $token = createTokenFromDocter($docter['id']);
         $medicalRecord = createMedicalRecord();
         delete('/api/medical_records/' . $medicalRecord['id'] + 1, headers: [
             'Authorization' => "Bearer $token",
         ])->assertNotFound()->assertJson(failedResponse('Medical record tidak ditemukan!', null, 'NOT_FOUND'));
+        assertEquals($medicalRecord, getMedicalRecord($medicalRecord['id']));
     });
     test('unauthorized error cause token is missing', function () {
         $this->seed([UserSeeder::class]);
@@ -397,11 +436,22 @@ describe('delete medical record', function () {
             )
         );
     });
-})->only();
+});
 
-function createMedicalRecord()
+function createTokenFromDocter($id)
+{
+    // membuat token user berdasarkan dokter id
+    $docter = Docter::find($id);
+    $token = $docter->user->createToken('docter_token')->plainTextToken;
+    return $token;
+}
+function createMedicalRecord($docterId = null)
 {
     $medicalRecord = MedicalRecord::factory(1)->createOne();
+    if ($docterId) {
+        $medicalRecord->docter_id = $docterId;
+        $medicalRecord->save();
+    }
     $medicalRecord = new MedicalRecordResource($medicalRecord);
     return $medicalRecord->toResponse(request())->getData(true)['data'];
 }
@@ -426,9 +476,10 @@ function successResponse($message, $data)
         'errors' => null
     ];
 }
-function getMedicalRecord($id)
+function getMedicalRecord($id, $docterId = null)
 {
     $medicalRecord = MedicalRecord::where('id', $id)->first();
+
     if (!$medicalRecord) return null;
     $medicalRecord = new MedicalRecordResource($medicalRecord);
     return $medicalRecord->toResponse(request())->getData(true)['data'];

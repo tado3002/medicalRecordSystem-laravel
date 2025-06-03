@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\MedicalRecordCreateRequest;
 use App\Http\Requests\MedicalRecordUpdateRequest;
 use App\Http\Resources\MedicalRecordResource;
+use App\Models\Docter;
 use App\Models\MedicalRecord;
 
 class MedicalRecordController extends Controller
@@ -15,7 +16,10 @@ class MedicalRecordController extends Controller
         $this->throwNotFoundIfDocterNotFound($data['docter_id']);
         $this->throwNotFoundIfPatientNotFound($data['patient_id']);
 
+        $userId = auth()->user()->id;
+        $this->checkUserIdFromDocter($userId, $data['docter_id']);
         $medicalRecord = MedicalRecord::create($data);
+
         return $this->responseSuccess(
             'Berhasil menambahkan data!',
             new MedicalRecordResource($medicalRecord),
@@ -36,11 +40,15 @@ class MedicalRecordController extends Controller
     public function update(int $id, MedicalRecordUpdateRequest $medicalRecordCreateRequest)
     {
         $data = $medicalRecordCreateRequest->validated();
+        $medicalRecord = $this->throwNotFoundIfMedicalRecordNotExist($id);
 
-        !empty($data['docter_id']) && $this->throwNotFoundIfDocterNotFound($data['docter_id']);
+        $userId = auth()->user()->id;
+        if (!empty($data['docter_id'])) {
+            $this->throwNotFoundIfDocterNotFound($data['docter_id']);
+            $this->checkUserIdFromDocter($userId, $data['docter_id']);
+        }
         !empty($data['patient_id']) && $this->throwNotFoundIfPatientNotFound($data['patient_id']);
 
-        $medicalRecord = $this->throwNotFoundIfMedicalRecordNotExist($id);
         $medicalRecord->fill($data);
         $medicalRecord->save();
 
@@ -52,7 +60,13 @@ class MedicalRecordController extends Controller
 
     public function delete(int $id)
     {
-        $medicalRecord = $this->throwNotFoundIfMedicalRecordNotExist($id);
+        $userId = auth()->user()->id;
+        $medicalRecord = MedicalRecord::where('id', $id)
+            ->whereHas('docter.user', function ($query) use ($userId) {
+                $query->where('id', $userId);
+            })->first();
+
+        if (!$medicalRecord) $this->responseError('Medical record tidak ditemukan!', 'NOT_FOUND', 404);
 
         $medicalRecord->delete();
         return $this->responseSuccess(
@@ -66,5 +80,13 @@ class MedicalRecordController extends Controller
         $medicalRecord = MedicalRecord::where('id', $id)->first();
         if ($medicalRecord) return $medicalRecord;
         $this->responseError('Medical record tidak ditemukan!', 'NOT_FOUND', 404);
+    }
+
+    public function checkUserIdFromDocter($userId, $docterId)
+    {
+        $docter = Docter::find($docterId);
+        if ($docter->user->id != $userId) {
+            $this->responseError('Spesialisasi tidak dimiliki oleh user!', 'FORBIDDEN', 403);
+        };
     }
 }

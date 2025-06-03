@@ -3,14 +3,17 @@ info:
   title: API spec untuk memanajemen rekam medis
   version: "1.0"
 servers:
-  - url: http://localhost:8000/api/medical_records
+  - url: http://localhost:8000/api
 security:
   - bearerAuth: []
 
 paths:
-  /:
+  /medical_records:
     post:
-      description: endpoint untuk menambahkan medical record
+      security:
+        - bearerAuth: [DOCTER]
+
+      description: endpoint untuk menambahkan medical record, Hanya  untuk user dengan role DOCTER
       requestBody:
         content:
           application/json:
@@ -99,6 +102,19 @@ paths:
 
               schema:
                 $ref: "#/components/schemas/Response"
+        "403":
+          description: Forbidden error karena role user bukan DOCTER
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"
+              example:
+                success: false
+                message: "Hanya untuk role DOCTER!"
+                data: null
+                errors:
+                  code: "FORBIDDEN"
+                  details: null
         "404":
           description: Not found error karena patient id atau docter id tidak ditemukan
           content:
@@ -112,8 +128,82 @@ paths:
                 errors:
                   code: "NOT_FOUND"
                   details: null
-  /{id}:
+  /medical_records/{id}:
+    get:
+      parameters:
+        - in: path
+          example:
+          schema:
+            type: integer
+            minimum: 1
+          name: id
+          description: id medical record yang akan dicari
+
+      description: endpoint untuk mendapatkan medical record berdasarkan id
+      responses:
+        "200":
+          description: berhasil mendapatkan medical record berdasarkan id
+          content:
+            application/json:
+              example:
+                success: true
+                message: Berhasil mendapatkan data!
+                data:
+                  id: 1
+                  date: 2025/05/30
+                  diagnosis: Rendah diri
+                  treatment: ibadah
+                  docter:
+                    id: 1
+                    specialization: Bedah rumah
+                    user:
+                      id: 1
+                      name: Muljono
+                      email: myEmail@gmail.com
+                      role: DOCTER
+                      phone: "081238082325"
+
+                  patient:
+                    id: 1
+                    name: Jokowee
+                    nik: "3514203109203330"
+                    birthday: 1978/09/01
+                    address: pasuruan, jawa timur
+                    phone: "081238082323"
+                    emergency_phone: "081238082324"
+
+              schema:
+                $ref: "#/components/schemas/Response"
+        "401":
+          description: Unauthorized error karena token tidak valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"
+              example:
+                success: false
+                message: "Unauthenticated!"
+                data: null
+                errors:
+                  code: "UNAUTHORIZED"
+                  details: null
+        "404":
+          description: Not found error karena medical record, patient id atau docter id tidak ditemukan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"
+              example:
+                success: false
+                message: "Patient tidak ditemukan!"
+                data: null
+                errors:
+                  code: "NOT_FOUND"
+                  details: null
     put:
+      security:
+        - bearerAuth: [DOCTER]
+
       parameters:
         - in: path
           example:
@@ -122,7 +212,7 @@ paths:
             minimum: 1
           name: id
           description: id medical record yang akan diupdate
-      description: endpoint untuk mengupdate rekam medis
+      description: endpoint untuk mengupdate rekam medis, Hanya untuk user dengan role DOCTER
       requestBody:
         content:
           application/json:
@@ -199,6 +289,19 @@ paths:
 
               schema:
                 $ref: "#/components/schemas/Response"
+        "403":
+          description: Forbidden error karena role user bukan DOCTER
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"
+              example:
+                success: false
+                message: "Hanya untuk role DOCTER!"
+                data: null
+                errors:
+                  code: "FORBIDDEN"
+                  details: null
         "404":
           description: Not found error karena medical record id, patient id atau docter id tidak ditemukan
           content:
@@ -213,6 +316,8 @@ paths:
                   code: "NOT_FOUND"
                   details: null
     delete:
+      security:
+        - bearerAuth: [DOCTER]
       parameters:
         - in: path
           example:
@@ -222,7 +327,7 @@ paths:
           name: id
           description: id medical record yang akan dihapus
 
-      description: endpoint untuk menghapus medical record
+      description: endpoint untuk menghapus medical record, Hanya untuk user dengan role DOCTER
       responses:
         "200":
           description: berhasil menghapus medical record
@@ -270,6 +375,19 @@ paths:
                 errors:
                   code: "UNAUTHORIZED"
                   details: null
+        "403":
+          description: Forbidden error karena role user bukan DOCTER
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"
+              example:
+                success: false
+                message: "Hanya untuk role DOCTER!"
+                data: null
+                errors:
+                  code: "FORBIDDEN"
+                  details: n
         "404":
           description: Not found error karena medical record, patient id atau docter id tidak ditemukan
           content:
